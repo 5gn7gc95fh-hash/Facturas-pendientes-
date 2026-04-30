@@ -1,23 +1,19 @@
 # Facturas CENTRAL PHONE
 
-Versión pulida para GitHub Pages.
+Versión corregida.
 
-## Cambios
+## Corrección principal
 
-- Se corrigió la edición: al editar un pendiente y guardar, se actualiza el mismo registro.
-- Se quitó el enfoque de “base de datos” en la interfaz.
-- Se dejaron solo estas opciones de datos:
+- En **Ver pendientes**, al presionar **Editar** y luego **Actualizar pendiente**, ahora reemplaza el mismo pendiente.
+- Ya no usa `onclick` con números; ahora cada pendiente tiene un ID interno fijo de texto.
+- Si el pendiente editado no existe, no crea otro automáticamente.
+- Se mantiene:
   - Exportar
   - Importar
   - Borrar todo
-- El botón **Borrar todo** deja el programa en 0.
-- El bloque **Texto para copiar** ahora es minimalista:
-  - Sin botones grandes.
-  - Sin botones mini.
-  - Tocas el renglón y se copia ese ítem.
-- La fecha y hora se guardan automáticamente al presionar **Guardar pendiente**.
-- Si editas, conserva la fecha y hora original.
+  - Texto para copiar minimalista
+  - Fecha y hora automática al guardar
 
-## Cómo subir
+## Instalación
 
-Reemplaza el archivo `index.html` anterior por este nuevo en tu repositorio de GitHub Pages.
+Sube `index.html` a tu repositorio de GitHub Pages y reemplaza el anterior.

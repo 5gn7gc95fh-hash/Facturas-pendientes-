@@ -225,7 +225,7 @@
 
     <section class="card wide">
       <h2><span class="num">3</span> Guardar pendiente</h2>
-      <div id="editBanner" class="editBanner">Modo edición activo: al guardar se actualizará la factura cargada, no se duplicará.</div>
+      <div id="editBanner" class="editBanner">Modo edición activo: al presionar Actualizar pendiente se reemplaza este mismo pendiente.</div>
 <div class="actions">
         <button class="primary" id="guardar">Guardar pendiente</button>
         <button class="warn" id="cancelarEdicion" style="display:none">Cancelar edición</button>
@@ -259,6 +259,10 @@ const fields = ["codigo","producto","cantidad","precio","iva","sinIva","detalle"
 const STORAGE_KEY = "central_phone_facturas_v5";
 let facturas = [];
 let editingId = null;
+
+function makeId(){
+  return "fac_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
+}
 
 function pad(n){ return String(n).padStart(2,"0"); }
 function nowParts(){
@@ -300,7 +304,7 @@ function getData(options = {}){
     direccion:$("direccion").value.trim(),
     fecha: anterior?.fecha || (forSave ? n.fecha : ""),
     hora: anterior?.hora || (forSave ? n.hora : ""),
-    id: editingId || (forSave ? Date.now() : null),
+    id: editingId || (forSave ? makeId() : null),
     actualizado: editingId && forSave ? new Date().toISOString() : null
   };
 }
@@ -374,6 +378,15 @@ function loadStorage(){
     const older = localStorage.getItem("central_phone_facturas_v4");
     facturas = JSON.parse(newer || older || "[]");
     if(!Array.isArray(facturas)) facturas = [];
+
+    const seen = new Set();
+    facturas = facturas.map((f, i) => {
+      let id = f.id ? String(f.id) : makeId();
+      if(seen.has(id)) id = makeId();
+      seen.add(id);
+      return {...f, id};
+    });
+    saveStorage();
   }catch(e){ facturas = []; }
 }
 function renderList(){
@@ -393,13 +406,24 @@ function renderList(){
         <div class="invoicePrice">$${escapeHtml(f.precio || "0.00")}</div>
       </div>
       <div class="actions">
-        <button class="small warn" onclick="editarFactura(${f.id})">Editar</button>
-        <button class="small blue" onclick="cargarFactura(${f.id})">Ver</button>
-        <button class="small ghost" onclick="copiarFactura(${f.id})">Copiar</button>
-        <button class="small danger" onclick="borrarFactura(${f.id})">Borrar</button>
+        <button class="small warn" data-action="editar" data-id="${escapeHtml(f.id)}">Editar</button>
+        <button class="small blue" data-action="ver" data-id="${escapeHtml(f.id)}">Ver</button>
+        <button class="small ghost" data-action="copiar" data-id="${escapeHtml(f.id)}">Copiar</button>
+        <button class="small danger" data-action="borrar" data-id="${escapeHtml(f.id)}">Borrar</button>
       </div>
     </div>
   `).join("");
+
+  cont.querySelectorAll("[data-action]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      const action = btn.getAttribute("data-action");
+      if(action === "editar") editarFactura(id);
+      if(action === "ver") cargarFactura(id);
+      if(action === "copiar") copiarFactura(id);
+      if(action === "borrar") borrarFactura(id);
+    });
+  });
 }
 function guardarPendiente(){
   const data = getData({forSave:true});
@@ -411,13 +435,18 @@ function guardarPendiente(){
   if(editingId){
     const idx = facturas.findIndex(x => String(x.id) === String(editingId));
     if(idx >= 0){
-      facturas[idx] = {...facturas[idx], ...data, id: editingId};
-      toast("Factura actualizada");
+      data.id = editingId; // fuerza el mismo ID
+      data.fecha = facturas[idx].fecha || data.fecha;
+      data.hora = facturas[idx].hora || data.hora;
+      facturas.splice(idx, 1, data); // reemplaza, no agrega
+      toast("Pendiente actualizado");
     }else{
-      facturas.push(data);
-      toast("Guardada");
+      // Si por alguna razón ya no existe, no lo duplica silenciosamente.
+      toast("No se encontró el pendiente para editar");
+      return;
     }
-    cancelarEdicion(false);
+    editingId = null;
+    actualizarModoEdicion();
   }else{
     facturas.push(data);
     toast("Pendiente guardado");
@@ -425,6 +454,7 @@ function guardarPendiente(){
 
   saveStorage();
   renderList();
+  renderCopy();
 }
 function cargarDatosEnFormulario(f){
   for(const key of fields){
@@ -520,7 +550,13 @@ function importarArchivo(file){
     try{
       const data = JSON.parse(reader.result);
       if(!Array.isArray(data)) throw new Error("El JSON no contiene una lista.");
-      facturas = data.map(x => ({...x, id: x.id || Date.now() + Math.floor(Math.random()*9999)}));
+      const seen = new Set();
+      facturas = data.map(x => {
+        let id = x.id ? String(x.id) : makeId();
+        if(seen.has(id)) id = makeId();
+        seen.add(id);
+        return {...x, id};
+      });
       saveStorage();
       renderList();
       cancelarEdicion(true);
@@ -531,11 +567,6 @@ function importarArchivo(file){
   };
   reader.readAsText(file);
 }
-
-window.cargarFactura = cargarFactura;
-window.editarFactura = editarFactura;
-window.copiarFactura = copiarFactura;
-window.borrarFactura = borrarFactura;
 
 $("precio").addEventListener("input",()=>{calcularSinIva();renderCopy();});
 $("iva").addEventListener("change",()=>{calcularSinIva();renderCopy();});
