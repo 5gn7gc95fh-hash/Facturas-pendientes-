@@ -1,19 +1,13 @@
 # Facturas CENTRAL PHONE
 
-Versión corregida.
+Versión ajustada.
 
-## Corrección principal
+## Cambio
 
-- En **Ver pendientes**, al presionar **Editar** y luego **Actualizar pendiente**, ahora reemplaza el mismo pendiente.
-- Ya no usa `onclick` con números; ahora cada pendiente tiene un ID interno fijo de texto.
-- Si el pendiente editado no existe, no crea otro automáticamente.
-- Se mantiene:
-  - Exportar
-  - Importar
-  - Borrar todo
-  - Texto para copiar minimalista
-  - Fecha y hora automática al guardar
+- En **Texto para copiar** se mantiene el texto pequeño/minimalista.
+- Se agregó nuevamente el botoncito pequeño **Copiar** al lado de cada renglón.
+- Se mantiene corregida la edición de pendientes: editar y actualizar no duplica.
 
 ## Instalación
 
-Sube `index.html` a tu repositorio de GitHub Pages y reemplaza el anterior.
+Sube `index.html` a GitHub Pages y reemplaza el anterior.

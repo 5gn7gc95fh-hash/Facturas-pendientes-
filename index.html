@@ -106,7 +106,10 @@
       background:#020617;
     }
     .copyLine{
-      display:block;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:6px;
+      align-items:center;
       padding:6px 8px;
       border-bottom:1px solid #1f2937;
       min-height:28px;
@@ -241,7 +244,7 @@
     <section class="card">
       <h2><span class="num">4</span> Texto para copiar</h2>
       <div class="copyBox" id="copyBox"></div>
-      <div class="copyHint">Toca un renglón para copiar ese ítem. Minimalista y directo. 📌</div>
+      <div class="copyHint">Toca el renglón o el botoncito para copiar ese ítem. 📌</div>
     </section>
 
     <section class="card">
@@ -357,12 +360,19 @@ function renderCopy(){
     return `
       <div class="copyLine" data-copy="${text}">
         <div class="copyText"><b>${k}:</b> ${escapeHtml(v)}</div>
+        <button class="small blue" data-copy-btn="${text}">Copiar</button>
       </div>
     `;
   }).join("");
   box.querySelectorAll(".copyLine").forEach(el=>{
     el.addEventListener("click",()=>{
       copyText(el.getAttribute("data-copy"));
+    });
+  });
+  box.querySelectorAll("[data-copy-btn]").forEach(btn=>{
+    btn.addEventListener("click",(ev)=>{
+      ev.stopPropagation();
+      copyText(btn.getAttribute("data-copy-btn"));
     });
   });
 }
