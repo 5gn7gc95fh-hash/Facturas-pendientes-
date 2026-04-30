@@ -4,19 +4,18 @@ App web simple para GitHub Pages.
 
 ## Cambios de esta versión
 
-- El botón **Ver** ya no rellena los campos de Producto ni Cliente.
-- Al presionar **Ver**, la información aparece solamente en **Texto para copiar**.
-- El botón **Editar** sí carga la factura en el formulario para modificarla.
+- **Cédula/RUC** acepta solo números.
+- **Correo** usa formato de email.
+- El correo se guarda en minúsculas, no en mayúsculas.
+- Si el correo no tiene formato válido, no permite guardar.
 - Se mantiene:
-  - Texto en MAYÚSCULAS
-  - Sin cantidad
-  - Guardar pendiente
+  - Pendientes
+  - Hechas
+  - Ver solo en Texto para copiar
   - Editar sin duplicar
-  - Limpiar
-  - Exportar
-  - Importar
+  - Texto para copiar compacto con botoncito
   - Borrar todo
-  - Botoncito Copiar al lado de cada ítem
+  - Exportar e Importar
 
 ## Instalación
 

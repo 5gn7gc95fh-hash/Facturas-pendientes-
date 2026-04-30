@@ -206,13 +206,14 @@
       <input id="cliente" placeholder="Ej: Juan Pérez" autocomplete="off">
 
       <label>Cédula / RUC</label>
-      <input id="cedula" placeholder="Ej: 1100000000" autocomplete="off" inputmode="numeric">
+      <input id="cedula" placeholder="Ej: 1100000000" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="13">
 
       <label>Teléfono</label>
       <input id="telefono" placeholder="Opcional" autocomplete="off" inputmode="tel">
 
       <label>Correo</label>
-      <input id="correo" placeholder="Opcional" autocomplete="off" inputmode="email">
+      <input id="correo" placeholder="Opcional" autocomplete="off" inputmode="email" type="email" autocapitalize="none" spellcheck="false">
+      <div class="miniNote">La cédula/RUC acepta solo números. El correo se guarda en minúsculas.</div>
 
       <label>Dirección</label>
       <input id="direccion" placeholder="Opcional" autocomplete="off">
@@ -243,6 +244,11 @@
       <h2><span class="num">5</span> Facturas pendientes</h2>
       <div class="list" id="lista"></div>
     </section>
+
+    <section class="card">
+      <h2><span class="num">6</span> Facturas hechas</h2>
+      <div class="list" id="listaHechas"></div>
+    </section>
   </div>
 </div>
 
@@ -252,7 +258,9 @@
 const $ = (id)=>document.getElementById(id);
 const fields = ["codigo","producto","precio","iva","sinIva","detalle","cliente","cedula","telefono","correo","direccion"];
 const STORAGE_KEY = "facturas_app_v1";
+const DONE_STORAGE_KEY = "facturas_hechas_app_v1";
 let facturas = [];
+let facturasHechas = [];
 let editingId = null;
 let selectedViewData = null;
 
@@ -276,6 +284,16 @@ function money(n){
 function upperText(id){
   return ($(id).value || "").trim().toUpperCase();
 }
+function onlyNumbers(id){
+  return ($(id).value || "").replace(/\D/g,"").trim();
+}
+function emailText(id){
+  return ($(id).value || "").trim().toLowerCase();
+}
+function isValidEmail(value){
+  if(!value) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 function actualizarFechaHora(){ return nowParts(); }
 function calcularSinIva(){
   const precio = Number($("precio").value || 0);
@@ -296,9 +314,9 @@ function getData(options = {}){
     sinIva:$("sinIva").value,
     detalle:upperText("detalle"),
     cliente:upperText("cliente"),
-    cedula:upperText("cedula"),
+    cedula:onlyNumbers("cedula"),
     telefono:upperText("telefono"),
-    correo:upperText("correo"),
+    correo:emailText("correo"),
     direccion:upperText("direccion"),
     fecha: anterior?.fecha || (forSave ? n.fecha : ""),
     hora: anterior?.hora || (forSave ? n.hora : ""),
@@ -375,6 +393,7 @@ function escapeHtml(s){
 }
 function saveStorage(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(facturas));
+  localStorage.setItem(DONE_STORAGE_KEY, JSON.stringify(facturasHechas));
 }
 function loadStorage(){
   try{
@@ -383,15 +402,30 @@ function loadStorage(){
     facturas = JSON.parse(newer || older || "[]");
     if(!Array.isArray(facturas)) facturas = [];
 
+    facturasHechas = JSON.parse(localStorage.getItem(DONE_STORAGE_KEY) || "[]");
+    if(!Array.isArray(facturasHechas)) facturasHechas = [];
+
     const seen = new Set();
-    facturas = facturas.map((f, i) => {
+    facturas = facturas.map((f) => {
       let id = f.id ? String(f.id) : makeId();
       if(seen.has(id)) id = makeId();
       seen.add(id);
       return {...f, id};
     });
+
+    const seenDone = new Set();
+    facturasHechas = facturasHechas.map((f) => {
+      let id = f.id ? String(f.id) : makeId();
+      if(seenDone.has(id)) id = makeId();
+      seenDone.add(id);
+      return {...f, id};
+    });
+
     saveStorage();
-  }catch(e){ facturas = []; }
+  }catch(e){
+    facturas = [];
+    facturasHechas = [];
+  }
 }
 function renderList(){
   const cont = $("lista");
@@ -412,7 +446,7 @@ function renderList(){
       <div class="actions">
         <button class="small warn" data-action="editar" data-id="${escapeHtml(f.id)}">Editar</button>
         <button class="small blue" data-action="ver" data-id="${escapeHtml(f.id)}">Ver</button>
-        <button class="small ghost" data-action="copiar" data-id="${escapeHtml(f.id)}">Copiar</button>
+        <button class="small primary" data-action="hecha" data-id="${escapeHtml(f.id)}">Hecha</button>
         <button class="small danger" data-action="borrar" data-id="${escapeHtml(f.id)}">Borrar</button>
       </div>
     </div>
@@ -424,8 +458,40 @@ function renderList(){
       const action = btn.getAttribute("data-action");
       if(action === "editar") editarFactura(id);
       if(action === "ver") cargarFactura(id);
-      if(action === "copiar") copiarFactura(id);
+      if(action === "hecha") marcarHecha(id);
       if(action === "borrar") borrarFactura(id);
+    });
+  });
+}
+
+function renderHechas(){
+  const cont = $("listaHechas");
+  if(!cont) return;
+  if(!facturasHechas.length){
+    cont.innerHTML = `<div class="empty">Todavía no hay facturas hechas.</div>`;
+    return;
+  }
+
+  cont.innerHTML = facturasHechas.slice().reverse().map(f => `
+    <div class="invoice">
+      <div class="invoiceTop">
+        <div>
+          <div class="invoiceTitle">${escapeHtml(f.codigo ? f.codigo + " · " : "")}${escapeHtml(f.producto || "Sin producto")}</div>
+          <div class="invoiceMeta">${escapeHtml(f.cliente || "Sin cliente")} · ${escapeHtml(f.fecha || "")} ${escapeHtml(f.hora || "")}</div>
+          <div class="invoiceMeta">Hecha: ${escapeHtml(f.fechaHecha || "")} ${escapeHtml(f.horaHecha || "")}</div>
+        </div>
+        <div class="invoicePrice">$${escapeHtml(f.precio || "0.00")}</div>
+      </div>
+      <div class="actions">
+        <button class="small blue" data-done-action="ver" data-id="${escapeHtml(f.id)}">Ver</button>
+      </div>
+    </div>
+  `).join("");
+
+  cont.querySelectorAll("[data-done-action]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      verFacturaHecha(id);
     });
   });
 }
@@ -433,6 +499,14 @@ function guardarPendiente(){
   const data = getData({forSave:true});
   if(!data.codigo && !data.producto && !data.cliente && !data.precio){
     toast("Faltan datos");
+    return;
+  }
+  if(data.cedula && !/^\d+$/.test(data.cedula)){
+    toast("Cédula/RUC solo números");
+    return;
+  }
+  if(data.correo && !isValidEmail(data.correo)){
+    toast("Correo no válido");
     return;
   }
 
@@ -459,6 +533,7 @@ function guardarPendiente(){
   selectedViewData = null;
   saveStorage();
   renderList();
+  renderHechas();
   renderCopy();
 }
 function cargarDatosEnFormulario(f){
@@ -507,6 +582,46 @@ function cancelarEdicion(limpiarForm=true){
   actualizarModoEdicion();
   if(limpiarForm) limpiar();
 }
+function verFacturaHecha(id){
+  const f = facturasHechas.find(x => String(x.id) === String(id));
+  if(!f) return;
+  editingId = null;
+  actualizarModoEdicion();
+  selectedViewData = f;
+  renderCopy();
+  toast("Mostrando factura hecha");
+}
+
+function marcarHecha(id){
+  const f = facturas.find(x => String(x.id) === String(id));
+  if(!f) return;
+  if(!confirm("¿Marcar esta factura como hecha?")) return;
+
+  const n = nowParts();
+  const hecha = {
+    ...f,
+    fechaHecha: n.fecha,
+    horaHecha: n.hora,
+    estado: "HECHA"
+  };
+
+  facturasHechas.push(hecha);
+  facturas = facturas.filter(x => String(x.id) !== String(id));
+
+  if(String(editingId) === String(id)){
+    limpiar();
+  }
+  if(selectedViewData && String(selectedViewData.id) === String(id)){
+    selectedViewData = null;
+    renderCopy();
+  }
+
+  saveStorage();
+  renderList();
+  renderHechas();
+  toast("Factura hecha");
+}
+
 function copiarFactura(id){
   const f = facturas.find(x => String(x.id) === String(id));
   if(!f) return;
@@ -519,6 +634,7 @@ function borrarFactura(id){
   if(String(editingId) === String(id)) cancelarEdicion(true);
   saveStorage();
   renderList();
+  renderHechas();
   toast("Borrada");
 }
 function limpiar(){
@@ -533,18 +649,22 @@ function limpiar(){
 function borrarTodo(){
   if(!confirm("¿Borrar todos los pendientes y dejar el programa en 0?")) return;
   facturas = [];
+  facturasHechas = [];
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(DONE_STORAGE_KEY);
   selectedViewData = null;
   editingId = null;
   actualizarModoEdicion();
   limpiar();
   renderList();
+  renderHechas();
   renderCopy();
   toast("Programa en 0");
 }
 
 function exportar(){
-  const blob = new Blob([JSON.stringify(facturas,null,2)], {type:"application/json"});
+  const data = { pendientes: facturas, hechas: facturasHechas };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   const d = new Date();
   a.href = URL.createObjectURL(blob);
@@ -557,16 +677,29 @@ function importarArchivo(file){
   reader.onload = () => {
     try{
       const data = JSON.parse(reader.result);
-      if(!Array.isArray(data)) throw new Error("El JSON no contiene una lista.");
+      let pendientes = Array.isArray(data) ? data : (Array.isArray(data.pendientes) ? data.pendientes : []);
+      let hechas = Array.isArray(data.hechas) ? data.hechas : [];
+      if(!Array.isArray(pendientes)) throw new Error("El JSON no contiene una lista.");
+
       const seen = new Set();
-      facturas = data.map(x => {
+      facturas = pendientes.map(x => {
         let id = x.id ? String(x.id) : makeId();
         if(seen.has(id)) id = makeId();
         seen.add(id);
         return {...x, id};
       });
+
+      const seenDone = new Set();
+      facturasHechas = hechas.map(x => {
+        let id = x.id ? String(x.id) : makeId();
+        if(seenDone.has(id)) id = makeId();
+        seenDone.add(id);
+        return {...x, id};
+      });
+
       saveStorage();
       renderList();
+      renderHechas();
       cancelarEdicion(true);
       toast("JSON importado");
     }catch(e){
@@ -585,7 +718,7 @@ fields.forEach(id=>{
   }
 });
 
-["codigo","producto","detalle","cliente","cedula","telefono","correo","direccion"].forEach(id=>{
+["codigo","producto","detalle","cliente","telefono","direccion"].forEach(id=>{
   const el = $(id);
   if(el){
     el.addEventListener("input",()=>{
@@ -597,6 +730,25 @@ fields.forEach(id=>{
     });
   }
 });
+
+
+const cedulaInput = $("cedula");
+if(cedulaInput){
+  cedulaInput.addEventListener("input",()=>{
+    selectedViewData = null;
+    cedulaInput.value = cedulaInput.value.replace(/\D/g,"");
+    renderCopy();
+  });
+}
+
+const correoInput = $("correo");
+if(correoInput){
+  correoInput.addEventListener("input",()=>{
+    selectedViewData = null;
+    correoInput.value = correoInput.value.trim().toLowerCase();
+    renderCopy();
+  });
+}
 
 $("guardar").addEventListener("click",guardarPendiente);
 $("limpiar").addEventListener("click",limpiar);
@@ -615,6 +767,7 @@ loadStorage();
 calcularSinIva();
 renderCopy();
 renderList();
+renderHechas();
 </script>
 </body>
 </html>
