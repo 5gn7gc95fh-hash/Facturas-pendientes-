@@ -1,12 +1,14 @@
-# Facturas CENTRAL PHONE
+# Facturas
 
-Versión ajustada.
+App web simple para GitHub Pages.
 
 ## Cambios
 
+- Se quitó completamente el nombre anterior del negocio.
+- La app queda neutra como **Facturas**.
 - Se quitó el campo **Cantidad**.
-- Todo texto que escribas se convierte a **MAYÚSCULAS**.
-- El texto para copiar también sale en **MAYÚSCULAS**.
+- Todo texto escrito se convierte a **MAYÚSCULAS**.
+- El texto para copiar sale en **MAYÚSCULAS**.
 - Se mantiene:
   - Código de producto
   - Guardar pendiente

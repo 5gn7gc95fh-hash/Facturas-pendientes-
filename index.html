@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Facturas - CENTRAL PHONE</title>
+  <title>Facturas - Facturas</title>
   <meta name="theme-color" content="#0f172a" />
   <style>
     :root{
@@ -159,8 +159,8 @@
   <section class="top">
     <div class="brand">
       <div>
-        <h1>Facturas CENTRAL PHONE</h1>
-        <div class="sub">Registro diario con fecha y hora automática. Copia datos rápido al Facturador SRI.</div>
+        <h1>Facturas</h1>
+        <div class="sub">Registro diario con fecha y hora automática. Copia datos rápido para facturar.</div>
       </div>
       <div class="badge">GitHub Pages</div>
     </div>
@@ -251,7 +251,7 @@
 <script>
 const $ = (id)=>document.getElementById(id);
 const fields = ["codigo","producto","precio","iva","sinIva","detalle","cliente","cedula","telefono","correo","direccion"];
-const STORAGE_KEY = "central_phone_facturas_v5";
+const STORAGE_KEY = "facturas_app_v1";
 let facturas = [];
 let editingId = null;
 
@@ -378,7 +378,7 @@ function saveStorage(){
 function loadStorage(){
   try{
     const newer = localStorage.getItem(STORAGE_KEY);
-    const older = localStorage.getItem("central_phone_facturas_v4");
+    const older = localStorage.getItem("facturas_app_v0");
     facturas = JSON.parse(newer || older || "[]");
     if(!Array.isArray(facturas)) facturas = [];
 
@@ -542,7 +542,7 @@ function exportar(){
   const a = document.createElement("a");
   const d = new Date();
   a.href = URL.createObjectURL(blob);
-  a.download = `facturas_central_phone_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+  a.download = `facturas_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
