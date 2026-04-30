@@ -254,6 +254,7 @@ const fields = ["codigo","producto","precio","iva","sinIva","detalle","cliente",
 const STORAGE_KEY = "facturas_app_v1";
 let facturas = [];
 let editingId = null;
+let selectedViewData = null;
 
 function makeId(){
   return "fac_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
@@ -341,7 +342,7 @@ function toast(msg){
   window.__toastTimer = setTimeout(()=>el.classList.remove("show"),1300);
 }
 function renderCopy(){
-  const data = getData();
+  const data = selectedViewData || getData();
   const lines = compactLines(data);
   const box = $("copyBox");
   if(lines.length === 0){
@@ -455,6 +456,7 @@ function guardarPendiente(){
     toast("Pendiente guardado");
   }
 
+  selectedViewData = null;
   saveStorage();
   renderList();
   renderCopy();
@@ -473,12 +475,14 @@ function cargarFactura(id){
   if(!f) return;
   editingId = null;
   actualizarModoEdicion();
-  cargarDatosEnFormulario(f);
-  toast("Factura cargada para ver/copiar");
+  selectedViewData = f;
+  renderCopy();
+  toast("Mostrando en texto para copiar");
 }
 function editarFactura(id){
   const f = facturas.find(x => String(x.id) === String(id));
   if(!f) return;
+  selectedViewData = null;
   editingId = id;
   actualizarModoEdicion();
   cargarDatosEnFormulario(f);
@@ -518,6 +522,7 @@ function borrarFactura(id){
   toast("Borrada");
 }
 function limpiar(){
+  selectedViewData = null;
   editingId = null;
   actualizarModoEdicion();
   ["codigo","producto","precio","sinIva","detalle","cliente","cedula","telefono","correo","direccion"].forEach(id=>$(id).value="");
@@ -529,6 +534,7 @@ function borrarTodo(){
   if(!confirm("¿Borrar todos los pendientes y dejar el programa en 0?")) return;
   facturas = [];
   localStorage.removeItem(STORAGE_KEY);
+  selectedViewData = null;
   editingId = null;
   actualizarModoEdicion();
   limpiar();
@@ -570,12 +576,12 @@ function importarArchivo(file){
   reader.readAsText(file);
 }
 
-$("precio").addEventListener("input",()=>{calcularSinIva();renderCopy();});
-$("iva").addEventListener("change",()=>{calcularSinIva();renderCopy();});
+$("precio").addEventListener("input",()=>{selectedViewData=null;calcularSinIva();renderCopy();});
+$("iva").addEventListener("change",()=>{selectedViewData=null;calcularSinIva();renderCopy();});
 fields.forEach(id=>{
   const el = $(id);
   if(el && !["precio","iva","fecha","hora","sinIva"].includes(id)){
-    el.addEventListener("input", renderCopy);
+    el.addEventListener("input", ()=>{selectedViewData=null;renderCopy();});
   }
 });
 
@@ -583,6 +589,7 @@ fields.forEach(id=>{
   const el = $(id);
   if(el){
     el.addEventListener("input",()=>{
+      selectedViewData = null;
       const start = el.selectionStart;
       const end = el.selectionEnd;
       el.value = el.value.toUpperCase();

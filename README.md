@@ -2,15 +2,14 @@
 
 App web simple para GitHub Pages.
 
-## Cambios
+## Cambios de esta versión
 
-- Se quitó completamente el nombre anterior del negocio.
-- La app queda neutra como **Facturas**.
-- Se quitó el campo **Cantidad**.
-- Todo texto escrito se convierte a **MAYÚSCULAS**.
-- El texto para copiar sale en **MAYÚSCULAS**.
+- El botón **Ver** ya no rellena los campos de Producto ni Cliente.
+- Al presionar **Ver**, la información aparece solamente en **Texto para copiar**.
+- El botón **Editar** sí carga la factura en el formulario para modificarla.
 - Se mantiene:
-  - Código de producto
+  - Texto en MAYÚSCULAS
+  - Sin cantidad
   - Guardar pendiente
   - Editar sin duplicar
   - Limpiar
