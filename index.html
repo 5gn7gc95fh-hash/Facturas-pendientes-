@@ -106,18 +106,16 @@
       background:#020617;
     }
     .copyLine{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) auto;
-      gap:8px;
-      align-items:center;
-      padding:7px 8px;
+      display:block;
+      padding:6px 8px;
       border-bottom:1px solid #1f2937;
-      min-height:34px;
+      min-height:28px;
+      cursor:pointer;
     }
     .copyLine:last-child{border-bottom:0}
     .copyText{
-      font-size:13px;
-      line-height:1.25;
+      font-size:12px;
+      line-height:1.2;
       color:#e5e7eb;
       white-space:nowrap;
       overflow:hidden;
@@ -232,8 +230,9 @@
         <button class="primary" id="guardar">Guardar pendiente</button>
         <button class="warn" id="cancelarEdicion" style="display:none">Cancelar edición</button>
         <button class="ghost" id="limpiar">Limpiar</button>
-        <button class="blue" id="exportar">Exportar respaldo JSON</button>
-        <button class="ghost" id="importarBtn">Importar JSON</button>
+        <button class="blue" id="exportar">Exportar</button>
+        <button class="ghost" id="importarBtn">Importar</button>
+        <button class="danger" id="borrarTodo">Borrar todo</button>
         <input id="importar" type="file" accept="application/json" hidden>
       </div>
       <div class="miniNote">La fecha y hora se guardan automáticamente al presionar Guardar pendiente. Nombre comercial: déjalo en blanco en el SRI.</div>
@@ -242,7 +241,7 @@
     <section class="card">
       <h2><span class="num">4</span> Texto para copiar</h2>
       <div class="copyBox" id="copyBox"></div>
-      <div class="copyHint">Toca un renglón o el botón mini para copiar solo ese ítem. Compacto, sin bloques gigantes. 📌</div>
+      <div class="copyHint">Toca un renglón para copiar ese ítem. Minimalista y directo. 📌</div>
     </section>
 
     <section class="card">
@@ -281,10 +280,11 @@ function calcularSinIva(){
   if(!precio){ $("sinIva").value = ""; return; }
   $("sinIva").value = money(precio / (1 + iva/100));
 }
-function getData(){
+function getData(options = {}){
   calcularSinIva();
+  const forSave = options.forSave === true;
   const n = nowParts();
-  const anterior = editingId ? facturas.find(x => x.id === editingId) : null;
+  const anterior = editingId ? facturas.find(x => String(x.id) === String(editingId)) : null;
   return {
     codigo:$("codigo").value.trim(),
     producto:$("producto").value.trim(),
@@ -298,10 +298,10 @@ function getData(){
     telefono:$("telefono").value.trim(),
     correo:$("correo").value.trim(),
     direccion:$("direccion").value.trim(),
-    fecha: anterior?.fecha || n.fecha,
-    hora: anterior?.hora || n.hora,
-    id: editingId || Date.now(),
-    actualizado: editingId ? new Date().toISOString() : null
+    fecha: anterior?.fecha || (forSave ? n.fecha : ""),
+    hora: anterior?.hora || (forSave ? n.hora : ""),
+    id: editingId || (forSave ? Date.now() : null),
+    actualizado: editingId && forSave ? new Date().toISOString() : null
   };
 }
 function compactLines(data){
@@ -353,13 +353,11 @@ function renderCopy(){
     return `
       <div class="copyLine" data-copy="${text}">
         <div class="copyText"><b>${k}:</b> ${escapeHtml(v)}</div>
-        <button class="small blue" data-copy="${text}">Copiar</button>
       </div>
     `;
   }).join("");
-  box.querySelectorAll("[data-copy]").forEach(el=>{
-    el.addEventListener("click",(ev)=>{
-      ev.stopPropagation();
+  box.querySelectorAll(".copyLine").forEach(el=>{
+    el.addEventListener("click",()=>{
       copyText(el.getAttribute("data-copy"));
     });
   });
@@ -404,14 +402,14 @@ function renderList(){
   `).join("");
 }
 function guardarPendiente(){
-  const data = getData();
+  const data = getData({forSave:true});
   if(!data.codigo && !data.producto && !data.cliente && !data.precio){
     toast("Faltan datos");
     return;
   }
 
   if(editingId){
-    const idx = facturas.findIndex(x => x.id === editingId);
+    const idx = facturas.findIndex(x => String(x.id) === String(editingId));
     if(idx >= 0){
       facturas[idx] = {...facturas[idx], ...data, id: editingId};
       toast("Factura actualizada");
@@ -438,7 +436,7 @@ function cargarDatosEnFormulario(f){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function cargarFactura(id){
-  const f = facturas.find(x => x.id === id);
+  const f = facturas.find(x => String(x.id) === String(id));
   if(!f) return;
   editingId = null;
   actualizarModoEdicion();
@@ -446,7 +444,7 @@ function cargarFactura(id){
   toast("Factura cargada para ver/copiar");
 }
 function editarFactura(id){
-  const f = facturas.find(x => x.id === id);
+  const f = facturas.find(x => String(x.id) === String(id));
   if(!f) return;
   editingId = id;
   actualizarModoEdicion();
@@ -473,15 +471,15 @@ function cancelarEdicion(limpiarForm=true){
   if(limpiarForm) limpiar();
 }
 function copiarFactura(id){
-  const f = facturas.find(x => x.id === id);
+  const f = facturas.find(x => String(x.id) === String(id));
   if(!f) return;
   const text = compactLines(f).map(([k,v])=>`${k}: ${v}`).join("\n");
   copyText(text);
 }
 function borrarFactura(id){
   if(!confirm("¿Borrar esta factura pendiente?")) return;
-  facturas = facturas.filter(x => x.id !== id);
-  if(editingId === id) cancelarEdicion(true);
+  facturas = facturas.filter(x => String(x.id) !== String(id));
+  if(String(editingId) === String(id)) cancelarEdicion(true);
   saveStorage();
   renderList();
   toast("Borrada");
@@ -495,12 +493,24 @@ function limpiar(){
   renderCopy();
   toast("Formulario limpio");
 }
+function borrarTodo(){
+  if(!confirm("¿Borrar todos los pendientes y dejar el programa en 0?")) return;
+  facturas = [];
+  localStorage.removeItem(STORAGE_KEY);
+  editingId = null;
+  actualizarModoEdicion();
+  limpiar();
+  renderList();
+  renderCopy();
+  toast("Programa en 0");
+}
+
 function exportar(){
   const blob = new Blob([JSON.stringify(facturas,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   const d = new Date();
   a.href = URL.createObjectURL(blob);
-  a.download = `respaldo_facturas_central_phone_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+  a.download = `facturas_central_phone_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -540,6 +550,7 @@ $("limpiar").addEventListener("click",limpiar);
 $("cancelarEdicion").addEventListener("click",()=>cancelarEdicion(true));
 $("exportar").addEventListener("click",exportar);
 $("importarBtn").addEventListener("click",()=>$("importar").click());
+$("borrarTodo").addEventListener("click",borrarTodo);
 $("importar").addEventListener("change",(e)=>{
   const file = e.target.files && e.target.files[0];
   if(file) importarArchivo(file);
