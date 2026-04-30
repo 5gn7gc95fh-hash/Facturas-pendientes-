@@ -4,17 +4,18 @@ App web simple para GitHub Pages.
 
 ## Cambios de esta versión
 
-- El apartado **3. Guardar pendiente** ahora se llama **3. Registrar factura**.
-- Se mantiene todo lo demás igual:
-  - Cédula/RUC solo números
-  - Correo con formato email
+- **Cédula/RUC** acepta solo números.
+- **Correo** usa formato de email.
+- El correo se guarda en minúsculas, no en mayúsculas.
+- Si el correo no tiene formato válido, no permite guardar.
+- Se mantiene:
   - Pendientes
   - Hechas
   - Ver solo en Texto para copiar
   - Editar sin duplicar
   - Texto para copiar compacto con botoncito
-  - Exportar e Importar
   - Borrar todo
+  - Exportar e Importar
 
 ## Instalación
 
