@@ -23,3 +23,5 @@ Sube estos archivos sueltos a la raíz del repositorio:
 - README.md
 
 Luego activa GitHub Pages en Settings > Pages > Deploy from a branch > main > /root.
+
+- Apartado 4 compactado: texto y botones más pequeños.

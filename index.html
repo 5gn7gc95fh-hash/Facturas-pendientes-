@@ -62,12 +62,12 @@
     .itemactions button{font-size:13px;padding:9px 10px;min-height:38px}
     .empty{color:var(--muted);text-align:center;border:1px dashed #334155;border-radius:16px;padding:22px}
     .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#020617;color:#e5e7eb;border:1px solid #334155;padding:12px 14px;border-radius:999px;box-shadow:var(--shadow);display:none;z-index:10;font-size:14px}
-    .copygrid{display:grid;grid-template-columns:1fr;gap:10px}
-    @media(min-width:720px){.copygrid{grid-template-columns:1fr 1fr}}
-    .copyitem{border:1px solid #334155;background:#020617;border-radius:14px;padding:10px}
-    .copylabel{color:#94a3b8;font-size:12px;font-weight:900;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
-    .copyvalue{color:#e5e7eb;font-size:16px;line-height:1.35;word-break:break-word;user-select:text;background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:10px;min-height:42px}
-    .copyitem button{width:100%;margin-top:8px;font-size:13px;min-height:38px;padding:9px 10px}
+    .copygrid{display:grid;grid-template-columns:1fr;gap:7px}
+    @media(min-width:520px){.copygrid{grid-template-columns:1fr 1fr}}@media(min-width:850px){.copygrid{grid-template-columns:1fr 1fr 1fr}}
+    .copyitem{border:1px solid #334155;background:#020617;border-radius:11px;padding:7px}
+    .copylabel{color:#94a3b8;font-size:10px;font-weight:900;margin-bottom:4px;text-transform:uppercase;letter-spacing:.02em}
+    .copyvalue{color:#e5e7eb;font-size:13px;line-height:1.25;word-break:break-word;user-select:text;background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:7px;min-height:32px}
+    .copyitem button{width:100%;margin-top:5px;font-size:11px;min-height:30px;padding:6px 8px;border-radius:9px}
     .hidden{display:none !important}
   </style>
 </head>
@@ -130,7 +130,7 @@
 
       <section class="card span">
         <h2>4. Texto para copiar ítem por ítem</h2>
-        <div class="mini" style="margin-bottom:12px">Toca “Copiar” en cada campo o mantén presionado el valor para seleccionarlo manualmente.</div>
+        <div class="mini" style="margin-bottom:8px">Toca “Copiar” en cada campo o mantén presionado el valor para seleccionarlo manualmente.</div>
         <div id="copybox" class="copygrid">
           <div class="empty">Guarda o toca “Copiar” en una factura para ver los campos separados.</div>
         </div>
