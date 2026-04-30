@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <title>Facturas SRI - Registro Diario</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <style>
+    :root{
+      --bg:#0b1220; --card:#111827; --card2:#0f172a; --text:#e5e7eb;
+      --muted:#94a3b8; --line:#263244; --primary:#0ea5e9; --primary2:#0284c7;
+      --green:#22c55e; --red:#ef4444; --yellow:#f59e0b; --input:#020617;
+      --shadow:0 12px 30px rgba(0,0,0,.35); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,#07101f 0%,#0b1220 100%);
+      color:var(--text); min-height:100vh; padding:14px;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding-bottom:38px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px 18px}
+    h1{font-size:24px;margin:0;letter-spacing:-.03em}
+    .sub{color:var(--muted);font-size:13px;margin-top:4px}
+    .badge{border:1px solid var(--line);color:#dbeafe;background:#0b2440;padding:8px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:850px){.grid{grid-template-columns:1fr 1fr}.span{grid-column:1/-1}}
+    .card{background:rgba(17,24,39,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .card h2{font-size:18px;margin:0 0 12px;letter-spacing:-.02em}
+    label{display:block;color:#cbd5e1;font-size:13px;font-weight:700;margin:12px 0 7px}
+    input,select,textarea{width:100%;background:var(--input);color:var(--text);border:1px solid #334155;border-radius:14px;padding:13px 12px;font-size:16px;outline:none}
+    textarea{min-height:76px;resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.18)}
+    .row{display:grid;grid-template-columns:1fr;gap:10px}
+    @media(min-width:580px){.row.two{grid-template-columns:1fr 1fr}.row.three{grid-template-columns:1fr 1fr 1fr}}
+    .mini{font-size:12px;color:var(--muted);line-height:1.35;margin-top:6px}
+    .result{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+    .box{border:1px solid var(--line);background:var(--card2);border-radius:14px;padding:10px}
+    .box b{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+    .box span{font-size:17px;font-weight:800}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+    button{border:0;border-radius:14px;padding:12px 14px;font-size:15px;font-weight:800;color:white;background:#334155;cursor:pointer;min-height:44px}
+    button.primary{background:linear-gradient(180deg,var(--primary),var(--primary2))}
+    button.green{background:linear-gradient(180deg,#22c55e,#15803d)}
+    button.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}
+    button.yellow{background:linear-gradient(180deg,#f59e0b,#b45309)}
+    button.ghost{background:#1f2937;border:1px solid #334155}
+    button:active{transform:scale(.99)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .search{flex:1;min-width:220px}
+    .list{display:grid;gap:10px}
+    .item{border:1px solid var(--line);background:#0f172a;border-radius:16px;padding:12px}
+    .itemtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .title{font-weight:900;font-size:16px}
+    .meta{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.35}
+    .status{font-size:12px;font-weight:900;padding:6px 8px;border-radius:999px;white-space:nowrap}
+    .pending{background:rgba(245,158,11,.16);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}
+    .done{background:rgba(34,197,94,.16);color:#86efac;border:1px solid rgba(34,197,94,.35)}
+    .itemactions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .itemactions button{font-size:13px;padding:9px 10px;min-height:38px}
+    .empty{color:var(--muted);text-align:center;border:1px dashed #334155;border-radius:16px;padding:22px}
+    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#020617;color:#e5e7eb;border:1px solid #334155;padding:12px 14px;border-radius:999px;box-shadow:var(--shadow);display:none;z-index:10;font-size:14px}
+    .copybox{background:#020617;border:1px solid #334155;border-radius:14px;padding:12px;color:#cbd5e1;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;line-height:1.45;max-height:260px;overflow:auto}
+    .hidden{display:none !important}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div><h1>Facturas SRI</h1><div class="sub">Registro diario para copiar y pegar en el Facturador SRI</div></div>
+      <div class="badge">IVA 15% · decimal con punto</div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>1. Producto</h2>
+        <label>Código principal *</label><input id="codigo" maxlength="25" placeholder="Ej: CEL001">
+        <label>Nombre del producto *</label><input id="producto" placeholder="Ej: TELÉFONO SAMSUNG A15 128GB">
+        <div class="row two">
+          <div><label>Precio TOTAL con IVA *</label><input id="total" inputmode="decimal" placeholder="Ej: 150.00"><div class="mini">Escribe con punto, no con coma.</div></div>
+          <div><label>Cantidad</label><input id="cantidad" inputmode="numeric" value="1"></div>
+        </div>
+        <label>Información adicional</label><textarea id="info" placeholder="Ej: color negro, IMEI, garantía, observación..."></textarea>
+        <div class="result">
+          <div class="box"><b>Unitario sin IVA</b><span id="sinIva">0.00</span></div>
+          <div class="box"><b>IVA 15%</b><span id="iva">0.00</span></div>
+          <div class="box"><b>Total</b><span id="totalVista">0.00</span></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. Cliente</h2>
+        <label>Tipo identificación *</label>
+        <select id="tipoId"><option value="Cédula">Cédula</option><option value="RUC">RUC</option><option value="Pasaporte">Pasaporte</option><option value="Consumidor final">Consumidor final</option></select>
+        <label>Identificación *</label><input id="identificacion" inputmode="numeric" placeholder="RUC / CI / Pasaporte">
+        <label>Razón social / Nombre *</label><input id="razon" placeholder="Nombre del cliente">
+        <div class="row two">
+          <div><label>Correo electrónico</label><input id="correo" type="email" placeholder="cliente@email.com"></div>
+          <div><label>Teléfono</label><input id="telefono" inputmode="tel" placeholder="Opcional"></div>
+        </div>
+        <label>Dirección</label><input id="direccion" placeholder="Opcional">
+        <div class="actions">
+          <button class="primary" onclick="guardar()">Guardar pendiente</button>
+          <button class="green" onclick="copiarActual()">Copiar datos</button>
+          <button class="ghost" onclick="limpiarFormulario()">Limpiar</button>
+        </div>
+        <div class="mini">La fecha y hora se guardan automáticamente al presionar “Guardar pendiente”.</div>
+      </section>
+
+      <section class="card span">
+        <div class="toolbar">
+          <h2 style="margin:0">3. Base de datos</h2>
+          <input class="search" id="buscar" oninput="render()" placeholder="Buscar por producto, cliente, identificación...">
+        </div>
+        <div class="actions" style="margin-top:0;margin-bottom:12px">
+          <button class="ghost" onclick="exportarJSON()">Exportar respaldo JSON</button>
+          <button class="ghost" onclick="document.getElementById('importar').click()">Importar respaldo JSON</button>
+          <button class="yellow" onclick="copiarPendientes()">Copiar pendientes</button>
+          <button class="red" onclick="borrarTodo()">Borrar todo</button>
+          <input id="importar" class="hidden" type="file" accept="application/json" onchange="importarJSON(event)">
+        </div>
+        <div id="lista" class="list"></div>
+      </section>
+
+      <section class="card span">
+        <h2>Texto para copiar</h2>
+        <div id="copybox" class="copybox">Aquí aparecerán los datos copiados.</div>
+      </section>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+<script>
+const IVA_RATE=0.15, KEY="facturas_sri_v1";
+let facturas=cargar();
+
+function n(value){const clean=String(value??"").replace(",",".").replace(/[^\d.]/g,"");const num=Number(clean);return Number.isFinite(num)?num:0;}
+function money(value){return (Math.round((Number(value)||0)*100)/100).toFixed(2);}
+function ahora(){const d=new Date();const pad=x=>String(x).padStart(2,"0");return {fecha:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,hora:`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,timestamp:d.toISOString()};}
+function cargar(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
+function persistir(){localStorage.setItem(KEY,JSON.stringify(facturas))}
+function calcular(){const total=n(document.getElementById("total").value);const cantidad=Math.max(1,parseInt(document.getElementById("cantidad").value||"1",10));const subtotal=total/(1+IVA_RATE);const iva=total-subtotal;const unitario=subtotal/cantidad;document.getElementById("sinIva").textContent=money(unitario);document.getElementById("iva").textContent=money(iva);document.getElementById("totalVista").textContent=money(total);return{total,cantidad,subtotal,iva,unitario};}
+["total","cantidad"].forEach(id=>document.getElementById(id).addEventListener("input",calcular));
+function datosFormulario(){const c=calcular();return{id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),estado:"pendiente",codigo:document.getElementById("codigo").value.trim(),producto:document.getElementById("producto").value.trim(),total:money(c.total),cantidad:c.cantidad,unitarioSinIva:money(c.unitario),subtotalSinIva:money(c.subtotal),iva:money(c.iva),info:document.getElementById("info").value.trim(),tipoId:document.getElementById("tipoId").value,identificacion:document.getElementById("identificacion").value.trim(),razon:document.getElementById("razon").value.trim(),correo:document.getElementById("correo").value.trim(),telefono:document.getElementById("telefono").value.trim(),direccion:document.getElementById("direccion").value.trim(),...ahora()};}
+function validar(f){if(!f.codigo)return"Falta código principal.";if(!f.producto)return"Falta nombre del producto.";if(n(f.total)<=0)return"Falta precio total con IVA.";if(f.tipoId!=="Consumidor final"&&!f.identificacion)return"Falta identificación.";if(!f.razon&&f.tipoId!=="Consumidor final")return"Falta razón social / nombre.";return"";}
+function guardar(){const f=datosFormulario();const err=validar(f);if(err){toast(err);return}if(f.tipoId==="Consumidor final"){f.identificacion=f.identificacion||"9999999999999";f.razon=f.razon||"CONSUMIDOR FINAL";f.correo=f.correo||"consumidorfinal@sri.gob.ec"}facturas.unshift(f);persistir();render();ponerTexto(formato(f));toast("Factura guardada con fecha y hora automática.");}
+function formato(f){return `PRODUCTO
+Código principal: ${f.codigo}
+Nombre: ${f.producto}
+Precio unitario sin IVA: ${f.unitarioSinIva}
+Cantidad: ${f.cantidad}
+Subtotal sin IVA: ${f.subtotalSinIva}
+IVA 15%: ${f.iva}
+Total con IVA: ${f.total}
+Tarifa IVA: 15%
+Información adicional: ${f.info||"-"}
+
+CLIENTE
+Tipo identificación: ${f.tipoId}
+Identificación: ${f.identificacion||"-"}
+Razón social: ${f.razon||"-"}
+Dirección: ${f.direccion||"-"}
+Teléfono: ${f.telefono||"-"}
+Correo electrónico: ${f.correo||"-"}
+
+FECHA Y HORA
+Fecha: ${f.fecha}
+Hora: ${f.hora}
+Estado: ${f.estado}`;}
+async function copiarTexto(txt){ponerTexto(txt);try{await navigator.clipboard.writeText(txt);toast("Copiado.")}catch{toast("No se pudo copiar automático. Copia desde el cuadro inferior.")}}
+function ponerTexto(txt){document.getElementById("copybox").textContent=txt}
+function copiarActual(){copiarTexto(formato(datosFormulario()))}
+function copiarFactura(id){const f=facturas.find(x=>x.id===id);if(f)copiarTexto(formato(f))}
+function marcarHecha(id){const f=facturas.find(x=>x.id===id);if(!f)return;f.estado=f.estado==="hecha"?"pendiente":"hecha";persistir();render()}
+function eliminar(id){if(!confirm("¿Eliminar este registro?"))return;facturas=facturas.filter(x=>x.id!==id);persistir();render()}
+function editar(id){const f=facturas.find(x=>x.id===id);if(!f)return;["codigo","producto","total","cantidad","info","identificacion","razon","correo","telefono","direccion"].forEach(k=>document.getElementById(k).value=f[k]||"");document.getElementById("tipoId").value=f.tipoId;calcular();toast("Registro cargado para editar. Guarda como nuevo si lo necesitas.");window.scrollTo({top:0,behavior:"smooth"})}
+function limpiarFormulario(){["codigo","producto","total","info","identificacion","razon","correo","telefono","direccion"].forEach(id=>document.getElementById(id).value="");document.getElementById("cantidad").value="1";document.getElementById("tipoId").value="Cédula";calcular()}
+function copiarPendientes(){const pendientes=facturas.filter(f=>f.estado==="pendiente");if(!pendientes.length){toast("No hay pendientes.");return}copiarTexto(pendientes.map(formato).join("\n\n-------------------------\n\n"))}
+function exportarJSON(){const blob=new Blob([JSON.stringify(facturas,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="respaldo_facturas_sri.json";a.click();URL.revokeObjectURL(url)}
+function importarJSON(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(!Array.isArray(data))throw new Error("Formato inválido");facturas=data;persistir();render();toast("Respaldo importado.")}catch(err){toast("No se pudo importar el JSON.")}};reader.readAsText(file);e.target.value=""}
+function borrarTodo(){if(!confirm("Esto borra toda la base local. ¿Seguro?"))return;facturas=[];persistir();render()}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.style.display="none",2300)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function render(){const q=document.getElementById("buscar").value.toLowerCase().trim();const data=facturas.filter(f=>!q||JSON.stringify(f).toLowerCase().includes(q));const lista=document.getElementById("lista");if(!data.length){lista.innerHTML='<div class="empty">No hay registros todavía.</div>';return}lista.innerHTML=data.map(f=>`<div class="item"><div class="itemtop"><div><div class="title">${esc(f.producto)} · $${esc(f.total)}</div><div class="meta">Cliente: ${esc(f.razon||"-")} · ID: ${esc(f.identificacion||"-")}<br>Fecha: ${esc(f.fecha)} · Hora: ${esc(f.hora)} · Unitario sin IVA: ${esc(f.unitarioSinIva)}</div></div><div class="status ${f.estado==="hecha"?"done":"pending"}">${f.estado==="hecha"?"HECHA":"PENDIENTE"}</div></div><div class="itemactions"><button class="green" onclick="copiarFactura('${f.id}')">Copiar</button><button class="primary" onclick="marcarHecha('${f.id}')">${f.estado==="hecha"?"Marcar pendiente":"Marcar hecha"}</button><button class="ghost" onclick="editar('${f.id}')">Editar</button><button class="red" onclick="eliminar('${f.id}')">Eliminar</button></div></div>`).join("")}
+calcular();render();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
