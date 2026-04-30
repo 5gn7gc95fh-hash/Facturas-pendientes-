@@ -62,7 +62,12 @@
     .itemactions button{font-size:13px;padding:9px 10px;min-height:38px}
     .empty{color:var(--muted);text-align:center;border:1px dashed #334155;border-radius:16px;padding:22px}
     .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#020617;color:#e5e7eb;border:1px solid #334155;padding:12px 14px;border-radius:999px;box-shadow:var(--shadow);display:none;z-index:10;font-size:14px}
-    .copybox{background:#020617;border:1px solid #334155;border-radius:14px;padding:12px;color:#cbd5e1;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;line-height:1.45;max-height:260px;overflow:auto}
+    .copygrid{display:grid;grid-template-columns:1fr;gap:10px}
+    @media(min-width:720px){.copygrid{grid-template-columns:1fr 1fr}}
+    .copyitem{border:1px solid #334155;background:#020617;border-radius:14px;padding:10px}
+    .copylabel{color:#94a3b8;font-size:12px;font-weight:900;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
+    .copyvalue{color:#e5e7eb;font-size:16px;line-height:1.35;word-break:break-word;user-select:text;background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:10px;min-height:42px}
+    .copyitem button{width:100%;margin-top:8px;font-size:13px;min-height:38px;padding:9px 10px}
     .hidden{display:none !important}
   </style>
 </head>
@@ -103,7 +108,6 @@
         <label>Dirección</label><input id="direccion" placeholder="Opcional">
         <div class="actions">
           <button class="primary" onclick="guardar()">Guardar pendiente</button>
-          <button class="green" onclick="copiarActual()">Copiar datos</button>
           <button class="ghost" onclick="limpiarFormulario()">Limpiar</button>
         </div>
         <div class="mini">La fecha y hora se guardan automáticamente al presionar “Guardar pendiente”.</div>
@@ -117,7 +121,7 @@
         <div class="actions" style="margin-top:0;margin-bottom:12px">
           <button class="ghost" onclick="exportarJSON()">Exportar respaldo JSON</button>
           <button class="ghost" onclick="document.getElementById('importar').click()">Importar respaldo JSON</button>
-          <button class="yellow" onclick="copiarPendientes()">Copiar pendientes</button>
+          <button class="yellow" onclick="copiarPendientes()">Ver pendientes para copiar</button>
           <button class="red" onclick="borrarTodo()">Borrar todo</button>
           <input id="importar" class="hidden" type="file" accept="application/json" onchange="importarJSON(event)">
         </div>
@@ -125,15 +129,18 @@
       </section>
 
       <section class="card span">
-        <h2>Texto para copiar</h2>
-        <div id="copybox" class="copybox">Aquí aparecerán los datos copiados.</div>
+        <h2>4. Texto para copiar ítem por ítem</h2>
+        <div class="mini" style="margin-bottom:12px">Toca “Copiar” en cada campo o mantén presionado el valor para seleccionarlo manualmente.</div>
+        <div id="copybox" class="copygrid">
+          <div class="empty">Guarda o toca “Copiar” en una factura para ver los campos separados.</div>
+        </div>
       </section>
     </div>
   </div>
   <div id="toast" class="toast"></div>
 
 <script>
-const IVA_RATE=0.15, KEY="facturas_sri_v1";
+const IVA_RATE=0.15, KEY="facturas_sri_v2_items";
 let facturas=cargar();
 
 function n(value){const clean=String(value??"").replace(",",".").replace(/[^\d.]/g,"");const num=Number(clean);return Number.isFinite(num)?num:0;}
@@ -143,47 +150,64 @@ function cargar(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{ret
 function persistir(){localStorage.setItem(KEY,JSON.stringify(facturas))}
 function calcular(){const total=n(document.getElementById("total").value);const cantidad=Math.max(1,parseInt(document.getElementById("cantidad").value||"1",10));const subtotal=total/(1+IVA_RATE);const iva=total-subtotal;const unitario=subtotal/cantidad;document.getElementById("sinIva").textContent=money(unitario);document.getElementById("iva").textContent=money(iva);document.getElementById("totalVista").textContent=money(total);return{total,cantidad,subtotal,iva,unitario};}
 ["total","cantidad"].forEach(id=>document.getElementById(id).addEventListener("input",calcular));
+
 function datosFormulario(){const c=calcular();return{id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),estado:"pendiente",codigo:document.getElementById("codigo").value.trim(),producto:document.getElementById("producto").value.trim(),total:money(c.total),cantidad:c.cantidad,unitarioSinIva:money(c.unitario),subtotalSinIva:money(c.subtotal),iva:money(c.iva),info:document.getElementById("info").value.trim(),tipoId:document.getElementById("tipoId").value,identificacion:document.getElementById("identificacion").value.trim(),razon:document.getElementById("razon").value.trim(),correo:document.getElementById("correo").value.trim(),telefono:document.getElementById("telefono").value.trim(),direccion:document.getElementById("direccion").value.trim(),...ahora()};}
 function validar(f){if(!f.codigo)return"Falta código principal.";if(!f.producto)return"Falta nombre del producto.";if(n(f.total)<=0)return"Falta precio total con IVA.";if(f.tipoId!=="Consumidor final"&&!f.identificacion)return"Falta identificación.";if(!f.razon&&f.tipoId!=="Consumidor final")return"Falta razón social / nombre.";return"";}
-function guardar(){const f=datosFormulario();const err=validar(f);if(err){toast(err);return}if(f.tipoId==="Consumidor final"){f.identificacion=f.identificacion||"9999999999999";f.razon=f.razon||"CONSUMIDOR FINAL";f.correo=f.correo||"consumidorfinal@sri.gob.ec"}facturas.unshift(f);persistir();render();ponerTexto(formato(f));toast("Factura guardada con fecha y hora automática.");}
-function formato(f){return `PRODUCTO
-Código principal: ${f.codigo}
-Nombre: ${f.producto}
-Precio unitario sin IVA: ${f.unitarioSinIva}
-Cantidad: ${f.cantidad}
-Subtotal sin IVA: ${f.subtotalSinIva}
-IVA 15%: ${f.iva}
-Total con IVA: ${f.total}
-Tarifa IVA: 15%
-Información adicional: ${f.info||"-"}
 
-CLIENTE
-Tipo identificación: ${f.tipoId}
-Identificación: ${f.identificacion||"-"}
-Razón social: ${f.razon||"-"}
-Dirección: ${f.direccion||"-"}
-Teléfono: ${f.telefono||"-"}
-Correo electrónico: ${f.correo||"-"}
+function guardar(){const f=datosFormulario();const err=validar(f);if(err){toast(err);return}if(f.tipoId==="Consumidor final"){f.identificacion=f.identificacion||"9999999999999";f.razon=f.razon||"CONSUMIDOR FINAL";f.correo=f.correo||"consumidorfinal@sri.gob.ec"}facturas.unshift(f);persistir();render();mostrarItems(f);toast("Factura guardada con fecha y hora automática.");}
 
-FECHA Y HORA
-Fecha: ${f.fecha}
-Hora: ${f.hora}
-Estado: ${f.estado}`;}
-async function copiarTexto(txt){ponerTexto(txt);try{await navigator.clipboard.writeText(txt);toast("Copiado.")}catch{toast("No se pudo copiar automático. Copia desde el cuadro inferior.")}}
-function ponerTexto(txt){document.getElementById("copybox").textContent=txt}
-function copiarActual(){copiarTexto(formato(datosFormulario()))}
-function copiarFactura(id){const f=facturas.find(x=>x.id===id);if(f)copiarTexto(formato(f))}
-function marcarHecha(id){const f=facturas.find(x=>x.id===id);if(!f)return;f.estado=f.estado==="hecha"?"pendiente":"hecha";persistir();render()}
+function campos(f){
+  return [
+    ["Código principal", f.codigo],
+    ["Nombre del producto", f.producto],
+    ["Precio unitario sin IVA", f.unitarioSinIva],
+    ["Cantidad", f.cantidad],
+    ["Subtotal sin IVA", f.subtotalSinIva],
+    ["IVA 15%", f.iva],
+    ["Total con IVA", f.total],
+    ["Tarifa IVA", "15%"],
+    ["Información adicional", f.info || "-"],
+    ["Tipo identificación", f.tipoId],
+    ["Identificación", f.identificacion || "-"],
+    ["Razón social / Nombre", f.razon || "-"],
+    ["Dirección", f.direccion || "-"],
+    ["Teléfono", f.telefono || "-"],
+    ["Correo electrónico", f.correo || "-"],
+    ["Fecha", f.fecha],
+    ["Hora", f.hora],
+    ["Estado", f.estado]
+  ];
+}
+
+function mostrarItems(f){
+  const box = document.getElementById("copybox");
+  box.innerHTML = campos(f).map(([label,value],i)=>`
+    <div class="copyitem">
+      <div class="copylabel">${esc(label)}</div>
+      <div class="copyvalue" id="copyvalue-${i}">${esc(value)}</div>
+      <button class="green" onclick="copiarValor('${String(value).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">Copiar</button>
+    </div>
+  `).join("");
+}
+
+async function copiarValor(txt){
+  try{await navigator.clipboard.writeText(String(txt));toast("Copiado: " + String(txt))}
+  catch{toast("No se pudo copiar automático. Mantén presionado el valor.")}
+}
+
+function formato(f){return campos(f).map(([a,b])=>`${a}: ${b}`).join("\n");}
+function copiarFactura(id){const f=facturas.find(x=>x.id===id);if(f)mostrarItems(f)}
+function marcarHecha(id){const f=facturas.find(x=>x.id===id);if(!f)return;f.estado=f.estado==="hecha"?"pendiente":"hecha";persistir();render();mostrarItems(f)}
 function eliminar(id){if(!confirm("¿Eliminar este registro?"))return;facturas=facturas.filter(x=>x.id!==id);persistir();render()}
-function editar(id){const f=facturas.find(x=>x.id===id);if(!f)return;["codigo","producto","total","cantidad","info","identificacion","razon","correo","telefono","direccion"].forEach(k=>document.getElementById(k).value=f[k]||"");document.getElementById("tipoId").value=f.tipoId;calcular();toast("Registro cargado para editar. Guarda como nuevo si lo necesitas.");window.scrollTo({top:0,behavior:"smooth"})}
+function editar(id){const f=facturas.find(x=>x.id===id);if(!f)return;["codigo","producto","total","cantidad","info","identificacion","razon","correo","telefono","direccion"].forEach(k=>document.getElementById(k).value=f[k]||"");document.getElementById("tipoId").value=f.tipoId;calcular();mostrarItems(f);toast("Registro cargado para editar. Guarda como nuevo si lo necesitas.");window.scrollTo({top:0,behavior:"smooth"})}
 function limpiarFormulario(){["codigo","producto","total","info","identificacion","razon","correo","telefono","direccion"].forEach(id=>document.getElementById(id).value="");document.getElementById("cantidad").value="1";document.getElementById("tipoId").value="Cédula";calcular()}
-function copiarPendientes(){const pendientes=facturas.filter(f=>f.estado==="pendiente");if(!pendientes.length){toast("No hay pendientes.");return}copiarTexto(pendientes.map(formato).join("\n\n-------------------------\n\n"))}
+function copiarPendientes(){const pendientes=facturas.filter(f=>f.estado==="pendiente");if(!pendientes.length){toast("No hay pendientes.");return}mostrarItems(pendientes[0]);toast("Mostrando la primera pendiente para copiar ítem por ítem.")}
 function exportarJSON(){const blob=new Blob([JSON.stringify(facturas,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="respaldo_facturas_sri.json";a.click();URL.revokeObjectURL(url)}
 function importarJSON(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(!Array.isArray(data))throw new Error("Formato inválido");facturas=data;persistir();render();toast("Respaldo importado.")}catch(err){toast("No se pudo importar el JSON.")}};reader.readAsText(file);e.target.value=""}
-function borrarTodo(){if(!confirm("Esto borra toda la base local. ¿Seguro?"))return;facturas=[];persistir();render()}
+function borrarTodo(){if(!confirm("Esto borra toda la base local. ¿Seguro?"))return;facturas=[];persistir();render();document.getElementById("copybox").innerHTML='<div class="empty">Guarda o toca “Copiar” en una factura para ver los campos separados.</div>'}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.style.display="none",2300)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-function render(){const q=document.getElementById("buscar").value.toLowerCase().trim();const data=facturas.filter(f=>!q||JSON.stringify(f).toLowerCase().includes(q));const lista=document.getElementById("lista");if(!data.length){lista.innerHTML='<div class="empty">No hay registros todavía.</div>';return}lista.innerHTML=data.map(f=>`<div class="item"><div class="itemtop"><div><div class="title">${esc(f.producto)} · $${esc(f.total)}</div><div class="meta">Cliente: ${esc(f.razon||"-")} · ID: ${esc(f.identificacion||"-")}<br>Fecha: ${esc(f.fecha)} · Hora: ${esc(f.hora)} · Unitario sin IVA: ${esc(f.unitarioSinIva)}</div></div><div class="status ${f.estado==="hecha"?"done":"pending"}">${f.estado==="hecha"?"HECHA":"PENDIENTE"}</div></div><div class="itemactions"><button class="green" onclick="copiarFactura('${f.id}')">Copiar</button><button class="primary" onclick="marcarHecha('${f.id}')">${f.estado==="hecha"?"Marcar pendiente":"Marcar hecha"}</button><button class="ghost" onclick="editar('${f.id}')">Editar</button><button class="red" onclick="eliminar('${f.id}')">Eliminar</button></div></div>`).join("")}
+function render(){const q=document.getElementById("buscar").value.toLowerCase().trim();const data=facturas.filter(f=>!q||JSON.stringify(f).toLowerCase().includes(q));const lista=document.getElementById("lista");if(!data.length){lista.innerHTML='<div class="empty">No hay registros todavía.</div>';return}lista.innerHTML=data.map(f=>`<div class="item"><div class="itemtop"><div><div class="title">${esc(f.producto)} · $${esc(f.total)}</div><div class="meta">Cliente: ${esc(f.razon||"-")} · ID: ${esc(f.identificacion||"-")}<br>Fecha: ${esc(f.fecha)} · Hora: ${esc(f.hora)} · Unitario sin IVA: ${esc(f.unitarioSinIva)}</div></div><div class="status ${f.estado==="hecha"?"done":"pending"}">${f.estado==="hecha"?"HECHA":"PENDIENTE"}</div></div><div class="itemactions"><button class="green" onclick="copiarFactura('${f.id}')">Ver para copiar</button><button class="primary" onclick="marcarHecha('${f.id}')">${f.estado==="hecha"?"Marcar pendiente":"Marcar hecha"}</button><button class="ghost" onclick="editar('${f.id}')">Editar</button><button class="red" onclick="eliminar('${f.id}')">Eliminar</button></div></div>`).join("")}
 calcular();render();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
 </script>
