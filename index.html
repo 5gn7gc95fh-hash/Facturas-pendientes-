@@ -68,6 +68,20 @@
     .copylabel{color:#94a3b8;font-size:10px;font-weight:900;margin-bottom:4px;text-transform:uppercase;letter-spacing:.02em}
     .copyvalue{color:#e5e7eb;font-size:13px;line-height:1.25;word-break:break-word;user-select:text;background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:7px;min-height:32px}
     .copyitem button{width:100%;margin-top:5px;font-size:11px;min-height:30px;padding:6px 8px;border-radius:9px}
+
+    .modalbg{position:fixed;inset:0;background:rgba(2,6,23,.72);display:none;align-items:flex-end;justify-content:center;z-index:20;padding:12px}
+    .modalbg.show{display:flex}
+    .modal{width:100%;max-width:760px;max-height:82vh;overflow:auto;background:#111827;border:1px solid #334155;border-radius:18px;box-shadow:var(--shadow);padding:14px}
+    .modalhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .modalhead h2{font-size:17px;margin:0}
+    .modalclose{min-height:34px;padding:7px 10px;border-radius:10px;font-size:12px}
+    .fieldgrid{display:grid;grid-template-columns:1fr;gap:7px}
+    @media(min-width:560px){.fieldgrid{grid-template-columns:1fr 1fr}}
+    .fieldrow{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;border:1px solid #334155;background:#020617;border-radius:11px;padding:7px}
+    .fieldtext{min-width:0}
+    .fieldlabel{color:#94a3b8;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-bottom:3px}
+    .fieldvalue{color:#e5e7eb;font-size:13px;line-height:1.25;word-break:break-word;user-select:text;background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:7px}
+    .fieldrow button{font-size:11px;min-height:30px;padding:6px 8px;border-radius:9px}
     .hidden{display:none !important}
   </style>
 </head>
@@ -137,6 +151,18 @@
       </section>
     </div>
   </div>
+
+  <div id="copyModal" class="modalbg" onclick="cerrarPanelSiFondo(event)">
+    <div class="modal">
+      <div class="modalhead">
+        <h2>Copiar campos</h2>
+        <button class="ghost modalclose" onclick="cerrarPanel()">Cerrar</button>
+      </div>
+      <div class="mini" style="margin-bottom:10px">Copia un campo a la vez para pegarlo en el Facturador SRI.</div>
+      <div id="copybox" class="fieldgrid"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
 <script>
@@ -179,15 +205,26 @@ function campos(f){
   ];
 }
 
+function abrirPanel(){document.getElementById("copyModal").classList.add("show")}
+function cerrarPanel(){document.getElementById("copyModal").classList.remove("show")}
+function cerrarPanelSiFondo(e){if(e.target.id==="copyModal")cerrarPanel()}
+
+function safeAttr(value){
+  return String(value ?? "").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/\n/g,"\\n").replace(/\r/g,"");
+}
+
 function mostrarItems(f){
   const box = document.getElementById("copybox");
-  box.innerHTML = campos(f).map(([label,value],i)=>`
-    <div class="copyitem">
-      <div class="copylabel">${esc(label)}</div>
-      <div class="copyvalue" id="copyvalue-${i}">${esc(value)}</div>
-      <button class="green" onclick="copiarValor('${String(value).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">Copiar</button>
+  box.innerHTML = campos(f).map(([label,value])=>`
+    <div class="fieldrow">
+      <div class="fieldtext">
+        <div class="fieldlabel">${esc(label)}</div>
+        <div class="fieldvalue">${esc(value)}</div>
+      </div>
+      <button class="green" onclick="copiarValor('${safeAttr(value)}')">Copiar</button>
     </div>
   `).join("");
+  abrirPanel();
 }
 
 async function copiarValor(txt){
@@ -204,10 +241,10 @@ function limpiarFormulario(){["codigo","producto","total","info","identificacion
 function copiarPendientes(){const pendientes=facturas.filter(f=>f.estado==="pendiente");if(!pendientes.length){toast("No hay pendientes.");return}mostrarItems(pendientes[0]);toast("Mostrando la primera pendiente para copiar ítem por ítem.")}
 function exportarJSON(){const blob=new Blob([JSON.stringify(facturas,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="respaldo_facturas_sri.json";a.click();URL.revokeObjectURL(url)}
 function importarJSON(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(!Array.isArray(data))throw new Error("Formato inválido");facturas=data;persistir();render();toast("Respaldo importado.")}catch(err){toast("No se pudo importar el JSON.")}};reader.readAsText(file);e.target.value=""}
-function borrarTodo(){if(!confirm("Esto borra toda la base local. ¿Seguro?"))return;facturas=[];persistir();render();document.getElementById("copybox").innerHTML='<div class="empty">Guarda o toca “Copiar” en una factura para ver los campos separados.</div>'}
+function borrarTodo(){if(!confirm("Esto borra toda la base local. ¿Seguro?"))return;facturas=[];persistir();render();cerrarPanel()}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.style.display="none",2300)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-function render(){const q=document.getElementById("buscar").value.toLowerCase().trim();const data=facturas.filter(f=>!q||JSON.stringify(f).toLowerCase().includes(q));const lista=document.getElementById("lista");if(!data.length){lista.innerHTML='<div class="empty">No hay registros todavía.</div>';return}lista.innerHTML=data.map(f=>`<div class="item"><div class="itemtop"><div><div class="title">${esc(f.producto)} · $${esc(f.total)}</div><div class="meta">Cliente: ${esc(f.razon||"-")} · ID: ${esc(f.identificacion||"-")}<br>Fecha: ${esc(f.fecha)} · Hora: ${esc(f.hora)} · Unitario sin IVA: ${esc(f.unitarioSinIva)}</div></div><div class="status ${f.estado==="hecha"?"done":"pending"}">${f.estado==="hecha"?"HECHA":"PENDIENTE"}</div></div><div class="itemactions"><button class="green" onclick="copiarFactura('${f.id}')">Ver para copiar</button><button class="primary" onclick="marcarHecha('${f.id}')">${f.estado==="hecha"?"Marcar pendiente":"Marcar hecha"}</button><button class="ghost" onclick="editar('${f.id}')">Editar</button><button class="red" onclick="eliminar('${f.id}')">Eliminar</button></div></div>`).join("")}
+function render(){const q=document.getElementById("buscar").value.toLowerCase().trim();const data=facturas.filter(f=>!q||JSON.stringify(f).toLowerCase().includes(q));const lista=document.getElementById("lista");if(!data.length){lista.innerHTML='<div class="empty">No hay registros todavía.</div>';return}lista.innerHTML=data.map(f=>`<div class="item"><div class="itemtop"><div><div class="title">${esc(f.producto)} · $${esc(f.total)}</div><div class="meta">Cliente: ${esc(f.razon||"-")} · ID: ${esc(f.identificacion||"-")}<br>Fecha: ${esc(f.fecha)} · Hora: ${esc(f.hora)} · Unitario sin IVA: ${esc(f.unitarioSinIva)}</div></div><div class="status ${f.estado==="hecha"?"done":"pending"}">${f.estado==="hecha"?"HECHA":"PENDIENTE"}</div></div><div class="itemactions"><button class="green" onclick="copiarFactura('${f.id}')">Copiar campos</button><button class="primary" onclick="marcarHecha('${f.id}')">${f.estado==="hecha"?"Marcar pendiente":"Marcar hecha"}</button><button class="ghost" onclick="editar('${f.id}')">Editar</button><button class="red" onclick="eliminar('${f.id}')">Eliminar</button></div></div>`).join("")}
 calcular();render();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
 </script>
