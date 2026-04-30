@@ -1,22 +1,15 @@
 # Facturas CENTRAL PHONE
 
-App web simple para GitHub Pages.
+Versión actualizada para GitHub Pages.
+
+## Cambios
+
+- Se quitaron los campos visibles de fecha y hora.
+- La fecha y hora se guardan automáticamente al presionar **Guardar pendiente**.
+- Si editas una factura pendiente, conserva la fecha y hora original.
+- Se mantiene código de producto, guardar pendiente, limpiar y editar.
+- Se mantiene el texto compacto para copiar ítem por ítem.
 
 ## Cómo subir
 
-1. En GitHub crea un repositorio.
-2. Sube `index.html`.
-3. Entra a Settings > Pages.
-4. En Source elige Deploy from a branch.
-5. Branch: main / root.
-6. Guarda y abre la URL que te da GitHub Pages.
-
-## Funciones
-
-- Registrar producto primero.
-- Guardar cliente.
-- Fecha y hora automática.
-- Calcular precio sin IVA.
-- Guardar facturas pendientes en el navegador.
-- Exportar e importar respaldo JSON.
-- Texto para copiar por ítems compactos, con botones mini.
+Reemplaza el `index.html` anterior por este nuevo en tu repositorio de GitHub Pages.

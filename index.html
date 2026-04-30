@@ -79,6 +79,7 @@
     button.primary{background:var(--accent);color:#03140a}
     button.blue{background:var(--accent2);color:#06131f}
     button.danger{background:var(--danger);color:#fff}
+    button.warn{background:var(--warn);color:#1a1000}
     button.ghost{background:#1f2937;color:#e5e7eb;border:1px solid #334155}
     button.small{
       font-size:11px;
@@ -87,6 +88,17 @@
       min-width:54px;
       line-height:1;
     }
+    .editBanner{
+      display:none;
+      border:1px solid #92400e;
+      background:#451a03;
+      color:#fed7aa;
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:13px;
+      margin-bottom:10px;
+    }
+    .editBanner.show{display:block}
     .copyBox{
       border:1px solid #263244;
       border-radius:14px;
@@ -139,7 +151,6 @@
     .toast.show{transform:translateX(-50%) translateY(0)}
     .muted{color:var(--muted)}
     .miniNote{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
-    .divider{height:1px;background:#1f2937;margin:11px 0}
   </style>
 </head>
 <body>
@@ -148,7 +159,7 @@
     <div class="brand">
       <div>
         <h1>Facturas CENTRAL PHONE</h1>
-        <div class="sub">Registro diario con fecha y hora automática. Hecho para copiar datos rápido al Facturador SRI.</div>
+        <div class="sub">Registro diario con fecha y hora automática. Copia datos rápido al Facturador SRI.</div>
       </div>
       <div class="badge">GitHub Pages</div>
     </div>
@@ -158,21 +169,25 @@
     <section class="card">
       <h2><span class="num">1</span> Producto</h2>
 
+      <div class="row">
+        <div>
+          <label>Código de producto</label>
+          <input id="codigo" placeholder="Ej: CP-001 / A15-128" autocomplete="off">
+        </div>
+        <div>
+          <label>Cantidad</label>
+          <input id="cantidad" type="number" inputmode="decimal" min="1" step="1" value="1">
+        </div>
+      </div>
+
       <label>Producto / equipo / servicio</label>
       <input id="producto" placeholder="Ej: Samsung A15 / Cambio de pantalla" autocomplete="off">
 
       <div class="row">
         <div>
-          <label>Cantidad</label>
-          <input id="cantidad" type="number" inputmode="decimal" min="1" step="1" value="1">
-        </div>
-        <div>
           <label>Precio total con IVA</label>
           <input id="precio" type="number" inputmode="decimal" step="0.01" placeholder="Ej: 150.00">
         </div>
-      </div>
-
-      <div class="row">
         <div>
           <label>IVA</label>
           <select id="iva">
@@ -180,11 +195,10 @@
             <option value="0">0%</option>
           </select>
         </div>
-        <div>
-          <label>Precio sin IVA</label>
-          <input id="sinIva" readonly placeholder="Automático">
-        </div>
       </div>
+
+      <label>Precio sin IVA</label>
+      <input id="sinIva" readonly placeholder="Automático">
 
       <label>Detalle adicional</label>
       <textarea id="detalle" placeholder="Ej: color, IMEI, condición, garantía, observaciones"></textarea>
@@ -212,36 +226,27 @@
     </section>
 
     <section class="card wide">
-      <h2><span class="num">3</span> Guardar factura pendiente</h2>
-      <div class="row">
-        <div>
-          <label>Fecha automática</label>
-          <input id="fecha" readonly>
-        </div>
-        <div>
-          <label>Hora automática</label>
-          <input id="hora" readonly>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="primary" id="guardar">Guardar factura</button>
-        <button class="ghost" id="limpiar">Limpiar formulario</button>
+      <h2><span class="num">3</span> Guardar pendiente</h2>
+      <div id="editBanner" class="editBanner">Modo edición activo: al guardar se actualizará la factura cargada, no se duplicará.</div>
+<div class="actions">
+        <button class="primary" id="guardar">Guardar pendiente</button>
+        <button class="warn" id="cancelarEdicion" style="display:none">Cancelar edición</button>
+        <button class="ghost" id="limpiar">Limpiar</button>
         <button class="blue" id="exportar">Exportar respaldo JSON</button>
         <button class="ghost" id="importarBtn">Importar JSON</button>
         <input id="importar" type="file" accept="application/json" hidden>
       </div>
-      <div class="miniNote">Nombre comercial: déjalo en blanco en el SRI. Al terminar: firmar y enviar.</div>
+      <div class="miniNote">La fecha y hora se guardan automáticamente al presionar Guardar pendiente. Nombre comercial: déjalo en blanco en el SRI.</div>
     </section>
 
     <section class="card">
       <h2><span class="num">4</span> Texto para copiar</h2>
       <div class="copyBox" id="copyBox"></div>
-      <div class="copyHint">Toca un renglón o el botón mini para copiar solo ese ítem. Sin bloques gigantes. Sin estorbo. 📌</div>
+      <div class="copyHint">Toca un renglón o el botón mini para copiar solo ese ítem. Compacto, sin bloques gigantes. 📌</div>
     </section>
 
     <section class="card">
-      <h2><span class="num">5</span> Facturas guardadas</h2>
+      <h2><span class="num">5</span> Facturas pendientes</h2>
       <div class="list" id="lista"></div>
     </section>
   </div>
@@ -251,9 +256,10 @@
 
 <script>
 const $ = (id)=>document.getElementById(id);
-const fields = ["producto","cantidad","precio","iva","sinIva","detalle","cliente","cedula","telefono","correo","direccion","fecha","hora"];
-const STORAGE_KEY = "central_phone_facturas_v4";
+const fields = ["codigo","producto","cantidad","precio","iva","sinIva","detalle","cliente","cedula","telefono","correo","direccion"];
+const STORAGE_KEY = "central_phone_facturas_v5";
 let facturas = [];
+let editingId = null;
 
 function pad(n){ return String(n).padStart(2,"0"); }
 function nowParts(){
@@ -268,11 +274,7 @@ function money(n){
   if(!Number.isFinite(x)) return "";
   return x.toFixed(2);
 }
-function actualizarFechaHora(){
-  const n = nowParts();
-  $("fecha").value = n.fecha;
-  $("hora").value = n.hora;
-}
+function actualizarFechaHora(){ return nowParts(); }
 function calcularSinIva(){
   const precio = Number($("precio").value || 0);
   const iva = Number($("iva").value || 0);
@@ -280,9 +282,11 @@ function calcularSinIva(){
   $("sinIva").value = money(precio / (1 + iva/100));
 }
 function getData(){
-  actualizarFechaHora();
   calcularSinIva();
+  const n = nowParts();
+  const anterior = editingId ? facturas.find(x => x.id === editingId) : null;
   return {
+    codigo:$("codigo").value.trim(),
     producto:$("producto").value.trim(),
     cantidad:$("cantidad").value.trim() || "1",
     precio:money($("precio").value),
@@ -294,13 +298,15 @@ function getData(){
     telefono:$("telefono").value.trim(),
     correo:$("correo").value.trim(),
     direccion:$("direccion").value.trim(),
-    fecha:$("fecha").value,
-    hora:$("hora").value,
-    id: Date.now()
+    fecha: anterior?.fecha || n.fecha,
+    hora: anterior?.hora || n.hora,
+    id: editingId || Date.now(),
+    actualizado: editingId ? new Date().toISOString() : null
   };
 }
 function compactLines(data){
   return [
+    ["Código", data.codigo],
     ["Producto", data.producto],
     ["Cantidad", data.cantidad],
     ["Precio total", data.precio ? `$${data.precio}` : ""],
@@ -311,8 +317,6 @@ function compactLines(data){
     ["Teléfono", data.telefono],
     ["Correo", data.correo],
     ["Dirección", data.direccion],
-    ["Fecha", data.fecha],
-    ["Hora", data.hora],
     ["Detalle", data.detalle]
   ].filter(([k,v]) => String(v || "").trim() !== "");
 }
@@ -368,54 +372,105 @@ function saveStorage(){
 }
 function loadStorage(){
   try{
-    facturas = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const newer = localStorage.getItem(STORAGE_KEY);
+    const older = localStorage.getItem("central_phone_facturas_v4");
+    facturas = JSON.parse(newer || older || "[]");
     if(!Array.isArray(facturas)) facturas = [];
   }catch(e){ facturas = []; }
 }
 function renderList(){
   const cont = $("lista");
   if(!facturas.length){
-    cont.innerHTML = `<div class="empty">Todavía no hay facturas guardadas.</div>`;
+    cont.innerHTML = `<div class="empty">Todavía no hay facturas pendientes.</div>`;
     return;
   }
   cont.innerHTML = facturas.slice().reverse().map(f => `
     <div class="invoice">
       <div class="invoiceTop">
         <div>
-          <div class="invoiceTitle">${escapeHtml(f.producto || "Sin producto")}</div>
-          <div class="invoiceMeta">${escapeHtml(f.cliente || "Sin cliente")} · ${escapeHtml(f.fecha)} ${escapeHtml(f.hora)}</div>
+          <div class="invoiceTitle">${escapeHtml(f.codigo ? f.codigo + " · " : "")}${escapeHtml(f.producto || "Sin producto")}</div>
+          <div class="invoiceMeta">${escapeHtml(f.cliente || "Sin cliente")} · ${escapeHtml(f.fecha || "")} ${escapeHtml(f.hora || "")}</div>
           <div class="invoiceMeta">Sin IVA: $${escapeHtml(f.sinIva || "0.00")} · IVA ${escapeHtml(f.iva || "15")}%</div>
         </div>
         <div class="invoicePrice">$${escapeHtml(f.precio || "0.00")}</div>
       </div>
       <div class="actions">
-        <button class="small blue" onclick="cargarFactura(${f.id})">Cargar</button>
+        <button class="small warn" onclick="editarFactura(${f.id})">Editar</button>
+        <button class="small blue" onclick="cargarFactura(${f.id})">Ver</button>
         <button class="small ghost" onclick="copiarFactura(${f.id})">Copiar</button>
         <button class="small danger" onclick="borrarFactura(${f.id})">Borrar</button>
       </div>
     </div>
   `).join("");
 }
-function guardarFactura(){
+function guardarPendiente(){
   const data = getData();
-  if(!data.producto && !data.cliente && !data.precio){
+  if(!data.codigo && !data.producto && !data.cliente && !data.precio){
     toast("Faltan datos");
     return;
   }
-  facturas.push(data);
+
+  if(editingId){
+    const idx = facturas.findIndex(x => x.id === editingId);
+    if(idx >= 0){
+      facturas[idx] = {...facturas[idx], ...data, id: editingId};
+      toast("Factura actualizada");
+    }else{
+      facturas.push(data);
+      toast("Guardada");
+    }
+    cancelarEdicion(false);
+  }else{
+    facturas.push(data);
+    toast("Pendiente guardado");
+  }
+
   saveStorage();
   renderList();
-  toast("Factura guardada");
 }
-function cargarFactura(id){
-  const f = facturas.find(x => x.id === id);
-  if(!f) return;
+function cargarDatosEnFormulario(f){
   for(const key of fields){
     if($(key) && f[key] !== undefined) $(key).value = f[key];
+    if($(key) && f[key] === undefined && key === "codigo") $(key).value = "";
   }
   calcularSinIva();
   renderCopy();
   window.scrollTo({top:0,behavior:"smooth"});
+}
+function cargarFactura(id){
+  const f = facturas.find(x => x.id === id);
+  if(!f) return;
+  editingId = null;
+  actualizarModoEdicion();
+  cargarDatosEnFormulario(f);
+  toast("Factura cargada para ver/copiar");
+}
+function editarFactura(id){
+  const f = facturas.find(x => x.id === id);
+  if(!f) return;
+  editingId = id;
+  actualizarModoEdicion();
+  cargarDatosEnFormulario(f);
+  toast("Modo edición activo");
+}
+function actualizarModoEdicion(){
+  const banner = $("editBanner");
+  const cancelar = $("cancelarEdicion");
+  const guardar = $("guardar");
+  if(editingId){
+    banner.classList.add("show");
+    cancelar.style.display = "inline-block";
+    guardar.textContent = "Actualizar pendiente";
+  }else{
+    banner.classList.remove("show");
+    cancelar.style.display = "none";
+    guardar.textContent = "Guardar pendiente";
+  }
+}
+function cancelarEdicion(limpiarForm=true){
+  editingId = null;
+  actualizarModoEdicion();
+  if(limpiarForm) limpiar();
 }
 function copiarFactura(id){
   const f = facturas.find(x => x.id === id);
@@ -424,18 +479,21 @@ function copiarFactura(id){
   copyText(text);
 }
 function borrarFactura(id){
-  if(!confirm("¿Borrar esta factura guardada?")) return;
+  if(!confirm("¿Borrar esta factura pendiente?")) return;
   facturas = facturas.filter(x => x.id !== id);
+  if(editingId === id) cancelarEdicion(true);
   saveStorage();
   renderList();
   toast("Borrada");
 }
 function limpiar(){
-  ["producto","precio","sinIva","detalle","cliente","cedula","telefono","correo","direccion"].forEach(id=>$(id).value="");
+  editingId = null;
+  actualizarModoEdicion();
+  ["codigo","producto","precio","sinIva","detalle","cliente","cedula","telefono","correo","direccion"].forEach(id=>$(id).value="");
   $("cantidad").value = "1";
   $("iva").value = "15";
-  actualizarFechaHora();
   renderCopy();
+  toast("Formulario limpio");
 }
 function exportar(){
   const blob = new Blob([JSON.stringify(facturas,null,2)], {type:"application/json"});
@@ -452,9 +510,10 @@ function importarArchivo(file){
     try{
       const data = JSON.parse(reader.result);
       if(!Array.isArray(data)) throw new Error("El JSON no contiene una lista.");
-      facturas = data;
+      facturas = data.map(x => ({...x, id: x.id || Date.now() + Math.floor(Math.random()*9999)}));
       saveStorage();
       renderList();
+      cancelarEdicion(true);
       toast("JSON importado");
     }catch(e){
       alert("No se pudo importar el archivo. Motivo: " + e.message);
@@ -464,6 +523,7 @@ function importarArchivo(file){
 }
 
 window.cargarFactura = cargarFactura;
+window.editarFactura = editarFactura;
 window.copiarFactura = copiarFactura;
 window.borrarFactura = borrarFactura;
 
@@ -475,8 +535,9 @@ fields.forEach(id=>{
     el.addEventListener("input", renderCopy);
   }
 });
-$("guardar").addEventListener("click",guardarFactura);
+$("guardar").addEventListener("click",guardarPendiente);
 $("limpiar").addEventListener("click",limpiar);
+$("cancelarEdicion").addEventListener("click",()=>cancelarEdicion(true));
 $("exportar").addEventListener("click",exportar);
 $("importarBtn").addEventListener("click",()=>$("importar").click());
 $("importar").addEventListener("change",(e)=>{
@@ -485,8 +546,7 @@ $("importar").addEventListener("change",(e)=>{
   e.target.value = "";
 });
 
-actualizarFechaHora();
-setInterval(()=>{actualizarFechaHora();renderCopy();},30000);
+setInterval(()=>{renderCopy();},30000);
 loadStorage();
 calcularSinIva();
 renderCopy();
