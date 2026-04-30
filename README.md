@@ -1,30 +1,22 @@
-# Facturas SRI
+# Facturas CENTRAL PHONE
 
-Versión modificada.
+App web simple para GitHub Pages.
 
-## Cambios
+## Cómo subir
 
-- Se quitó el botón "Copiar datos" del apartado Cliente.
-- El apartado "Texto para copiar" ahora muestra los datos ítem por ítem.
-- Cada campo tiene su propio botón "Copiar".
-- Producto primero.
-- Fecha y hora automáticas.
-- IVA 15%.
-- Decimal con punto.
+1. En GitHub crea un repositorio.
+2. Sube `index.html`.
+3. Entra a Settings > Pages.
+4. En Source elige Deploy from a branch.
+5. Branch: main / root.
+6. Guarda y abre la URL que te da GitHub Pages.
 
-## GitHub Pages
+## Funciones
 
-Sube estos archivos sueltos a la raíz del repositorio:
-
-- index.html
-- manifest.json
-- sw.js
-- icon.svg
-- README.md
-
-Luego activa GitHub Pages en Settings > Pages > Deploy from a branch > main > /root.
-
-- Apartado 4 compactado: texto y botones más pequeños.
-
-- Apartado 4 eliminado como bloque fijo.
-- Ahora cada factura abre un panel flotante de copia por campos.
+- Registrar producto primero.
+- Guardar cliente.
+- Fecha y hora automática.
+- Calcular precio sin IVA.
+- Guardar facturas pendientes en el navegador.
+- Exportar e importar respaldo JSON.
+- Texto para copiar por ítems compactos, con botones mini.

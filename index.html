@@ -1,252 +1,496 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
-  <title>Facturas SRI - Registro Diario</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon.svg">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Facturas - CENTRAL PHONE</title>
+  <meta name="theme-color" content="#0f172a" />
   <style>
     :root{
-      --bg:#0b1220; --card:#111827; --card2:#0f172a; --text:#e5e7eb;
-      --muted:#94a3b8; --line:#263244; --primary:#0ea5e9; --primary2:#0284c7;
-      --green:#22c55e; --red:#ef4444; --yellow:#f59e0b; --input:#020617;
-      --shadow:0 12px 30px rgba(0,0,0,.35); --radius:18px;
+      --bg:#0b1120;
+      --panel:#111827;
+      --panel2:#0f172a;
+      --line:#263244;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#22c55e;
+      --accent2:#38bdf8;
+      --danger:#ef4444;
+      --warn:#f59e0b;
+      --input:#020617;
+      --shadow:0 18px 50px rgba(0,0,0,.32);
+      --radius:16px;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      background:linear-gradient(180deg,#07101f 0%,#0b1220 100%);
-      color:var(--text); min-height:100vh; padding:14px;
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+    body{min-height:100vh;padding:14px;padding-bottom:32px}
+    .app{max-width:920px;margin:0 auto}
+    .top{
+      background:linear-gradient(135deg,#111827,#0f172a 60%,#052e16);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      border-radius:22px;
+      padding:16px;
+      margin-bottom:14px;
     }
-    .wrap{max-width:980px;margin:0 auto;padding-bottom:38px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px 18px}
-    h1{font-size:24px;margin:0;letter-spacing:-.03em}
-    .sub{color:var(--muted);font-size:13px;margin-top:4px}
-    .badge{border:1px solid var(--line);color:#dbeafe;background:#0b2440;padding:8px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
-    .grid{display:grid;grid-template-columns:1fr;gap:14px}
-    @media(min-width:850px){.grid{grid-template-columns:1fr 1fr}.span{grid-column:1/-1}}
-    .card{background:rgba(17,24,39,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-    .card h2{font-size:18px;margin:0 0 12px;letter-spacing:-.02em}
-    label{display:block;color:#cbd5e1;font-size:13px;font-weight:700;margin:12px 0 7px}
-    input,select,textarea{width:100%;background:var(--input);color:var(--text);border:1px solid #334155;border-radius:14px;padding:13px 12px;font-size:16px;outline:none}
-    textarea{min-height:76px;resize:vertical}
-    input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(14,165,233,.18)}
-    .row{display:grid;grid-template-columns:1fr;gap:10px}
-    @media(min-width:580px){.row.two{grid-template-columns:1fr 1fr}.row.three{grid-template-columns:1fr 1fr 1fr}}
-    .mini{font-size:12px;color:var(--muted);line-height:1.35;margin-top:6px}
-    .result{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
-    .box{border:1px solid var(--line);background:var(--card2);border-radius:14px;padding:10px}
-    .box b{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-    .box span{font-size:17px;font-weight:800}
-    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
-    button{border:0;border-radius:14px;padding:12px 14px;font-size:15px;font-weight:800;color:white;background:#334155;cursor:pointer;min-height:44px}
-    button.primary{background:linear-gradient(180deg,var(--primary),var(--primary2))}
-    button.green{background:linear-gradient(180deg,#22c55e,#15803d)}
-    button.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}
-    button.yellow{background:linear-gradient(180deg,#f59e0b,#b45309)}
-    button.ghost{background:#1f2937;border:1px solid #334155}
-    button:active{transform:scale(.99)}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .search{flex:1;min-width:220px}
-    .list{display:grid;gap:10px}
-    .item{border:1px solid var(--line);background:#0f172a;border-radius:16px;padding:12px}
-    .itemtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-    .title{font-weight:900;font-size:16px}
-    .meta{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.35}
-    .status{font-size:12px;font-weight:900;padding:6px 8px;border-radius:999px;white-space:nowrap}
-    .pending{background:rgba(245,158,11,.16);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}
-    .done{background:rgba(34,197,94,.16);color:#86efac;border:1px solid rgba(34,197,94,.35)}
-    .itemactions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
-    .itemactions button{font-size:13px;padding:9px 10px;min-height:38px}
-    .empty{color:var(--muted);text-align:center;border:1px dashed #334155;border-radius:16px;padding:22px}
-    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#020617;color:#e5e7eb;border:1px solid #334155;padding:12px 14px;border-radius:999px;box-shadow:var(--shadow);display:none;z-index:10;font-size:14px}
-    .copygrid{display:grid;grid-template-columns:1fr;gap:7px}
-    @media(min-width:520px){.copygrid{grid-template-columns:1fr 1fr}}@media(min-width:850px){.copygrid{grid-template-columns:1fr 1fr 1fr}}
-    .copyitem{border:1px solid #334155;background:#020617;border-radius:11px;padding:7px}
-    .copylabel{color:#94a3b8;font-size:10px;font-weight:900;margin-bottom:4px;text-transform:uppercase;letter-spacing:.02em}
-    .copyvalue{color:#e5e7eb;font-size:13px;line-height:1.25;word-break:break-word;user-select:text;background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:7px;min-height:32px}
-    .copyitem button{width:100%;margin-top:5px;font-size:11px;min-height:30px;padding:6px 8px;border-radius:9px}
-
-    .modalbg{position:fixed;inset:0;background:rgba(2,6,23,.72);display:none;align-items:flex-end;justify-content:center;z-index:20;padding:12px}
-    .modalbg.show{display:flex}
-    .modal{width:100%;max-width:760px;max-height:82vh;overflow:auto;background:#111827;border:1px solid #334155;border-radius:18px;box-shadow:var(--shadow);padding:14px}
-    .modalhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-    .modalhead h2{font-size:17px;margin:0}
-    .modalclose{min-height:34px;padding:7px 10px;border-radius:10px;font-size:12px}
-    .fieldgrid{display:grid;grid-template-columns:1fr;gap:7px}
-    @media(min-width:560px){.fieldgrid{grid-template-columns:1fr 1fr}}
-    .fieldrow{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;border:1px solid #334155;background:#020617;border-radius:11px;padding:7px}
-    .fieldtext{min-width:0}
-    .fieldlabel{color:#94a3b8;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-bottom:3px}
-    .fieldvalue{color:#e5e7eb;font-size:13px;line-height:1.25;word-break:break-word;user-select:text;background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:7px}
-    .fieldrow button{font-size:11px;min-height:30px;padding:6px 8px;border-radius:9px}
-    .hidden{display:none !important}
+    .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{font-size:21px;line-height:1.1;margin:0}
+    .sub{color:var(--muted);font-size:13px;margin-top:6px}
+    .badge{font-size:12px;color:#bbf7d0;border:1px solid #14532d;background:#052e16;padding:7px 10px;border-radius:999px;white-space:nowrap}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:760px){.grid{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:13px;
+      box-shadow:0 10px 28px rgba(0,0,0,.18);
+    }
+    .card h2{
+      display:flex;align-items:center;gap:8px;
+      font-size:15px;margin:0 0 10px 0;color:#f8fafc
+    }
+    .num{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:23px;height:23px;border-radius:50%;
+      background:#1f2937;color:#93c5fd;font-size:12px;border:1px solid #334155
+    }
+    label{display:block;font-size:12px;color:var(--muted);margin:9px 0 5px}
+    input,select,textarea{
+      width:100%;
+      background:var(--input);
+      color:var(--text);
+      border:1px solid #334155;
+      border-radius:12px;
+      padding:11px 12px;
+      font-size:16px;
+      outline:none;
+    }
+    textarea{min-height:70px;resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:#38bdf8;box-shadow:0 0 0 3px rgba(56,189,248,.12)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+    button{
+      border:0;border-radius:12px;padding:11px 13px;
+      color:#06131f;background:#e5e7eb;font-weight:750;font-size:14px;
+      cursor:pointer;touch-action:manipulation;
+    }
+    button.primary{background:var(--accent);color:#03140a}
+    button.blue{background:var(--accent2);color:#06131f}
+    button.danger{background:var(--danger);color:#fff}
+    button.ghost{background:#1f2937;color:#e5e7eb;border:1px solid #334155}
+    button.small{
+      font-size:11px;
+      padding:5px 8px;
+      border-radius:8px;
+      min-width:54px;
+      line-height:1;
+    }
+    .copyBox{
+      border:1px solid #263244;
+      border-radius:14px;
+      overflow:hidden;
+      background:#020617;
+    }
+    .copyLine{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:center;
+      padding:7px 8px;
+      border-bottom:1px solid #1f2937;
+      min-height:34px;
+    }
+    .copyLine:last-child{border-bottom:0}
+    .copyText{
+      font-size:13px;
+      line-height:1.25;
+      color:#e5e7eb;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .copyText b{color:#93c5fd;font-weight:750}
+    .copyHint{
+      color:var(--muted);
+      font-size:12px;
+      margin:8px 0 0;
+    }
+    .list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;padding-right:3px}
+    .invoice{
+      border:1px solid #253144;
+      background:#0b1220;
+      border-radius:14px;
+      padding:10px;
+    }
+    .invoiceTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .invoiceTitle{font-size:14px;font-weight:800;color:#f8fafc}
+    .invoiceMeta{font-size:12px;color:var(--muted);margin-top:3px}
+    .invoicePrice{font-weight:900;color:#bbf7d0;white-space:nowrap}
+    .empty{color:var(--muted);font-size:13px;text-align:center;padding:14px;border:1px dashed #334155;border-radius:14px}
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(120px);
+      background:#16a34a;color:#03140a;font-weight:800;
+      padding:10px 14px;border-radius:999px;
+      box-shadow:0 18px 50px rgba(0,0,0,.35);
+      transition:.22s ease;z-index:99;font-size:13px;
+    }
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .muted{color:var(--muted)}
+    .miniNote{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
+    .divider{height:1px;background:#1f2937;margin:11px 0}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div><h1>Facturas SRI</h1><div class="sub">Registro diario para copiar y pegar en el Facturador SRI</div></div>
-      <div class="badge">IVA 15% · decimal con punto</div>
-    </header>
-
-    <div class="grid">
-      <section class="card">
-        <h2>1. Producto</h2>
-        <label>Código principal *</label><input id="codigo" maxlength="25" placeholder="Ej: CEL001">
-        <label>Nombre del producto *</label><input id="producto" placeholder="Ej: TELÉFONO SAMSUNG A15 128GB">
-        <div class="row two">
-          <div><label>Precio TOTAL con IVA *</label><input id="total" inputmode="decimal" placeholder="Ej: 150.00"><div class="mini">Escribe con punto, no con coma.</div></div>
-          <div><label>Cantidad</label><input id="cantidad" inputmode="numeric" value="1"></div>
-        </div>
-        <label>Información adicional</label><textarea id="info" placeholder="Ej: color negro, IMEI, garantía, observación..."></textarea>
-        <div class="result">
-          <div class="box"><b>Unitario sin IVA</b><span id="sinIva">0.00</span></div>
-          <div class="box"><b>IVA 15%</b><span id="iva">0.00</span></div>
-          <div class="box"><b>Total</b><span id="totalVista">0.00</span></div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>2. Cliente</h2>
-        <label>Tipo identificación *</label>
-        <select id="tipoId"><option value="Cédula">Cédula</option><option value="RUC">RUC</option><option value="Pasaporte">Pasaporte</option><option value="Consumidor final">Consumidor final</option></select>
-        <label>Identificación *</label><input id="identificacion" inputmode="numeric" placeholder="RUC / CI / Pasaporte">
-        <label>Razón social / Nombre *</label><input id="razon" placeholder="Nombre del cliente">
-        <div class="row two">
-          <div><label>Correo electrónico</label><input id="correo" type="email" placeholder="cliente@email.com"></div>
-          <div><label>Teléfono</label><input id="telefono" inputmode="tel" placeholder="Opcional"></div>
-        </div>
-        <label>Dirección</label><input id="direccion" placeholder="Opcional">
-        <div class="actions">
-          <button class="primary" onclick="guardar()">Guardar pendiente</button>
-          <button class="ghost" onclick="limpiarFormulario()">Limpiar</button>
-        </div>
-        <div class="mini">La fecha y hora se guardan automáticamente al presionar “Guardar pendiente”.</div>
-      </section>
-
-      <section class="card span">
-        <div class="toolbar">
-          <h2 style="margin:0">3. Base de datos</h2>
-          <input class="search" id="buscar" oninput="render()" placeholder="Buscar por producto, cliente, identificación...">
-        </div>
-        <div class="actions" style="margin-top:0;margin-bottom:12px">
-          <button class="ghost" onclick="exportarJSON()">Exportar respaldo JSON</button>
-          <button class="ghost" onclick="document.getElementById('importar').click()">Importar respaldo JSON</button>
-          <button class="yellow" onclick="copiarPendientes()">Ver pendientes para copiar</button>
-          <button class="red" onclick="borrarTodo()">Borrar todo</button>
-          <input id="importar" class="hidden" type="file" accept="application/json" onchange="importarJSON(event)">
-        </div>
-        <div id="lista" class="list"></div>
-      </section>
-
-      <section class="card span">
-        <h2>4. Texto para copiar ítem por ítem</h2>
-        <div class="mini" style="margin-bottom:8px">Toca “Copiar” en cada campo o mantén presionado el valor para seleccionarlo manualmente.</div>
-        <div id="copybox" class="copygrid">
-          <div class="empty">Guarda o toca “Copiar” en una factura para ver los campos separados.</div>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <div id="copyModal" class="modalbg" onclick="cerrarPanelSiFondo(event)">
-    <div class="modal">
-      <div class="modalhead">
-        <h2>Copiar campos</h2>
-        <button class="ghost modalclose" onclick="cerrarPanel()">Cerrar</button>
+<div class="app">
+  <section class="top">
+    <div class="brand">
+      <div>
+        <h1>Facturas CENTRAL PHONE</h1>
+        <div class="sub">Registro diario con fecha y hora automática. Hecho para copiar datos rápido al Facturador SRI.</div>
       </div>
-      <div class="mini" style="margin-bottom:10px">Copia un campo a la vez para pegarlo en el Facturador SRI.</div>
-      <div id="copybox" class="fieldgrid"></div>
+      <div class="badge">GitHub Pages</div>
     </div>
-  </div>
+  </section>
 
-  <div id="toast" class="toast"></div>
+  <div class="grid">
+    <section class="card">
+      <h2><span class="num">1</span> Producto</h2>
+
+      <label>Producto / equipo / servicio</label>
+      <input id="producto" placeholder="Ej: Samsung A15 / Cambio de pantalla" autocomplete="off">
+
+      <div class="row">
+        <div>
+          <label>Cantidad</label>
+          <input id="cantidad" type="number" inputmode="decimal" min="1" step="1" value="1">
+        </div>
+        <div>
+          <label>Precio total con IVA</label>
+          <input id="precio" type="number" inputmode="decimal" step="0.01" placeholder="Ej: 150.00">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>IVA</label>
+          <select id="iva">
+            <option value="15" selected>15%</option>
+            <option value="0">0%</option>
+          </select>
+        </div>
+        <div>
+          <label>Precio sin IVA</label>
+          <input id="sinIva" readonly placeholder="Automático">
+        </div>
+      </div>
+
+      <label>Detalle adicional</label>
+      <textarea id="detalle" placeholder="Ej: color, IMEI, condición, garantía, observaciones"></textarea>
+
+      <div class="miniNote">Primero carga el producto. El precio sin IVA se calcula automático usando punto decimal.</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">2</span> Cliente</h2>
+
+      <label>Nombre del cliente</label>
+      <input id="cliente" placeholder="Ej: Juan Pérez" autocomplete="off">
+
+      <label>Cédula / RUC</label>
+      <input id="cedula" placeholder="Ej: 1100000000" autocomplete="off" inputmode="numeric">
+
+      <label>Teléfono</label>
+      <input id="telefono" placeholder="Opcional" autocomplete="off" inputmode="tel">
+
+      <label>Correo</label>
+      <input id="correo" placeholder="Opcional" autocomplete="off" inputmode="email">
+
+      <label>Dirección</label>
+      <input id="direccion" placeholder="Opcional" autocomplete="off">
+    </section>
+
+    <section class="card wide">
+      <h2><span class="num">3</span> Guardar factura pendiente</h2>
+      <div class="row">
+        <div>
+          <label>Fecha automática</label>
+          <input id="fecha" readonly>
+        </div>
+        <div>
+          <label>Hora automática</label>
+          <input id="hora" readonly>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="guardar">Guardar factura</button>
+        <button class="ghost" id="limpiar">Limpiar formulario</button>
+        <button class="blue" id="exportar">Exportar respaldo JSON</button>
+        <button class="ghost" id="importarBtn">Importar JSON</button>
+        <input id="importar" type="file" accept="application/json" hidden>
+      </div>
+      <div class="miniNote">Nombre comercial: déjalo en blanco en el SRI. Al terminar: firmar y enviar.</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">4</span> Texto para copiar</h2>
+      <div class="copyBox" id="copyBox"></div>
+      <div class="copyHint">Toca un renglón o el botón mini para copiar solo ese ítem. Sin bloques gigantes. Sin estorbo. 📌</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">5</span> Facturas guardadas</h2>
+      <div class="list" id="lista"></div>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copiado</div>
 
 <script>
-const IVA_RATE=0.15, KEY="facturas_sri_v2_items";
-let facturas=cargar();
+const $ = (id)=>document.getElementById(id);
+const fields = ["producto","cantidad","precio","iva","sinIva","detalle","cliente","cedula","telefono","correo","direccion","fecha","hora"];
+const STORAGE_KEY = "central_phone_facturas_v4";
+let facturas = [];
 
-function n(value){const clean=String(value??"").replace(",",".").replace(/[^\d.]/g,"");const num=Number(clean);return Number.isFinite(num)?num:0;}
-function money(value){return (Math.round((Number(value)||0)*100)/100).toFixed(2);}
-function ahora(){const d=new Date();const pad=x=>String(x).padStart(2,"0");return {fecha:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,hora:`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,timestamp:d.toISOString()};}
-function cargar(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
-function persistir(){localStorage.setItem(KEY,JSON.stringify(facturas))}
-function calcular(){const total=n(document.getElementById("total").value);const cantidad=Math.max(1,parseInt(document.getElementById("cantidad").value||"1",10));const subtotal=total/(1+IVA_RATE);const iva=total-subtotal;const unitario=subtotal/cantidad;document.getElementById("sinIva").textContent=money(unitario);document.getElementById("iva").textContent=money(iva);document.getElementById("totalVista").textContent=money(total);return{total,cantidad,subtotal,iva,unitario};}
-["total","cantidad"].forEach(id=>document.getElementById(id).addEventListener("input",calcular));
-
-function datosFormulario(){const c=calcular();return{id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),estado:"pendiente",codigo:document.getElementById("codigo").value.trim(),producto:document.getElementById("producto").value.trim(),total:money(c.total),cantidad:c.cantidad,unitarioSinIva:money(c.unitario),subtotalSinIva:money(c.subtotal),iva:money(c.iva),info:document.getElementById("info").value.trim(),tipoId:document.getElementById("tipoId").value,identificacion:document.getElementById("identificacion").value.trim(),razon:document.getElementById("razon").value.trim(),correo:document.getElementById("correo").value.trim(),telefono:document.getElementById("telefono").value.trim(),direccion:document.getElementById("direccion").value.trim(),...ahora()};}
-function validar(f){if(!f.codigo)return"Falta código principal.";if(!f.producto)return"Falta nombre del producto.";if(n(f.total)<=0)return"Falta precio total con IVA.";if(f.tipoId!=="Consumidor final"&&!f.identificacion)return"Falta identificación.";if(!f.razon&&f.tipoId!=="Consumidor final")return"Falta razón social / nombre.";return"";}
-
-function guardar(){const f=datosFormulario();const err=validar(f);if(err){toast(err);return}if(f.tipoId==="Consumidor final"){f.identificacion=f.identificacion||"9999999999999";f.razon=f.razon||"CONSUMIDOR FINAL";f.correo=f.correo||"consumidorfinal@sri.gob.ec"}facturas.unshift(f);persistir();render();mostrarItems(f);toast("Factura guardada con fecha y hora automática.");}
-
-function campos(f){
+function pad(n){ return String(n).padStart(2,"0"); }
+function nowParts(){
+  const d = new Date();
+  return {
+    fecha: `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`,
+    hora: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  };
+}
+function money(n){
+  const x = Number(n || 0);
+  if(!Number.isFinite(x)) return "";
+  return x.toFixed(2);
+}
+function actualizarFechaHora(){
+  const n = nowParts();
+  $("fecha").value = n.fecha;
+  $("hora").value = n.hora;
+}
+function calcularSinIva(){
+  const precio = Number($("precio").value || 0);
+  const iva = Number($("iva").value || 0);
+  if(!precio){ $("sinIva").value = ""; return; }
+  $("sinIva").value = money(precio / (1 + iva/100));
+}
+function getData(){
+  actualizarFechaHora();
+  calcularSinIva();
+  return {
+    producto:$("producto").value.trim(),
+    cantidad:$("cantidad").value.trim() || "1",
+    precio:money($("precio").value),
+    iva:$("iva").value,
+    sinIva:$("sinIva").value,
+    detalle:$("detalle").value.trim(),
+    cliente:$("cliente").value.trim(),
+    cedula:$("cedula").value.trim(),
+    telefono:$("telefono").value.trim(),
+    correo:$("correo").value.trim(),
+    direccion:$("direccion").value.trim(),
+    fecha:$("fecha").value,
+    hora:$("hora").value,
+    id: Date.now()
+  };
+}
+function compactLines(data){
   return [
-    ["Código principal", f.codigo],
-    ["Nombre del producto", f.producto],
-    ["Precio unitario sin IVA", f.unitarioSinIva],
-    ["Cantidad", f.cantidad],
-    ["Subtotal sin IVA", f.subtotalSinIva],
-    ["IVA 15%", f.iva],
-    ["Total con IVA", f.total],
-    ["Tarifa IVA", "15%"],
-    ["Información adicional", f.info || "-"],
-    ["Tipo identificación", f.tipoId],
-    ["Identificación", f.identificacion || "-"],
-    ["Razón social / Nombre", f.razon || "-"],
-    ["Dirección", f.direccion || "-"],
-    ["Teléfono", f.telefono || "-"],
-    ["Correo electrónico", f.correo || "-"],
-    ["Fecha", f.fecha],
-    ["Hora", f.hora],
-    ["Estado", f.estado]
-  ];
+    ["Producto", data.producto],
+    ["Cantidad", data.cantidad],
+    ["Precio total", data.precio ? `$${data.precio}` : ""],
+    ["Precio sin IVA", data.sinIva ? `$${data.sinIva}` : ""],
+    ["IVA", data.iva ? `${data.iva}%` : ""],
+    ["Cliente", data.cliente],
+    ["Cédula/RUC", data.cedula],
+    ["Teléfono", data.telefono],
+    ["Correo", data.correo],
+    ["Dirección", data.direccion],
+    ["Fecha", data.fecha],
+    ["Hora", data.hora],
+    ["Detalle", data.detalle]
+  ].filter(([k,v]) => String(v || "").trim() !== "");
 }
-
-function abrirPanel(){document.getElementById("copyModal").classList.add("show")}
-function cerrarPanel(){document.getElementById("copyModal").classList.remove("show")}
-function cerrarPanelSiFondo(e){if(e.target.id==="copyModal")cerrarPanel()}
-
-function safeAttr(value){
-  return String(value ?? "").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/\n/g,"\\n").replace(/\r/g,"");
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){
+    const t = document.createElement("textarea");
+    t.value = text;
+    document.body.appendChild(t);
+    t.select();
+    document.execCommand("copy");
+    t.remove();
+  }
+  toast("Copiado: " + text);
 }
-
-function mostrarItems(f){
-  const box = document.getElementById("copybox");
-  box.innerHTML = campos(f).map(([label,value])=>`
-    <div class="fieldrow">
-      <div class="fieldtext">
-        <div class="fieldlabel">${esc(label)}</div>
-        <div class="fieldvalue">${esc(value)}</div>
+function toast(msg){
+  const el = $("toast");
+  el.textContent = msg.length > 42 ? msg.slice(0,42) + "..." : msg;
+  el.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>el.classList.remove("show"),1300);
+}
+function renderCopy(){
+  const data = getData();
+  const lines = compactLines(data);
+  const box = $("copyBox");
+  if(lines.length === 0){
+    box.innerHTML = `<div class="copyLine"><div class="copyText muted">Llena los datos y aquí aparecerán los ítems para copiar.</div></div>`;
+    return;
+  }
+  box.innerHTML = lines.map(([k,v]) => {
+    const text = `${k}: ${v}`.replace(/"/g,"&quot;");
+    return `
+      <div class="copyLine" data-copy="${text}">
+        <div class="copyText"><b>${k}:</b> ${escapeHtml(v)}</div>
+        <button class="small blue" data-copy="${text}">Copiar</button>
       </div>
-      <button class="green" onclick="copiarValor('${safeAttr(value)}')">Copiar</button>
+    `;
+  }).join("");
+  box.querySelectorAll("[data-copy]").forEach(el=>{
+    el.addEventListener("click",(ev)=>{
+      ev.stopPropagation();
+      copyText(el.getAttribute("data-copy"));
+    });
+  });
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function saveStorage(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(facturas));
+}
+function loadStorage(){
+  try{
+    facturas = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    if(!Array.isArray(facturas)) facturas = [];
+  }catch(e){ facturas = []; }
+}
+function renderList(){
+  const cont = $("lista");
+  if(!facturas.length){
+    cont.innerHTML = `<div class="empty">Todavía no hay facturas guardadas.</div>`;
+    return;
+  }
+  cont.innerHTML = facturas.slice().reverse().map(f => `
+    <div class="invoice">
+      <div class="invoiceTop">
+        <div>
+          <div class="invoiceTitle">${escapeHtml(f.producto || "Sin producto")}</div>
+          <div class="invoiceMeta">${escapeHtml(f.cliente || "Sin cliente")} · ${escapeHtml(f.fecha)} ${escapeHtml(f.hora)}</div>
+          <div class="invoiceMeta">Sin IVA: $${escapeHtml(f.sinIva || "0.00")} · IVA ${escapeHtml(f.iva || "15")}%</div>
+        </div>
+        <div class="invoicePrice">$${escapeHtml(f.precio || "0.00")}</div>
+      </div>
+      <div class="actions">
+        <button class="small blue" onclick="cargarFactura(${f.id})">Cargar</button>
+        <button class="small ghost" onclick="copiarFactura(${f.id})">Copiar</button>
+        <button class="small danger" onclick="borrarFactura(${f.id})">Borrar</button>
+      </div>
     </div>
   `).join("");
-  abrirPanel();
+}
+function guardarFactura(){
+  const data = getData();
+  if(!data.producto && !data.cliente && !data.precio){
+    toast("Faltan datos");
+    return;
+  }
+  facturas.push(data);
+  saveStorage();
+  renderList();
+  toast("Factura guardada");
+}
+function cargarFactura(id){
+  const f = facturas.find(x => x.id === id);
+  if(!f) return;
+  for(const key of fields){
+    if($(key) && f[key] !== undefined) $(key).value = f[key];
+  }
+  calcularSinIva();
+  renderCopy();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function copiarFactura(id){
+  const f = facturas.find(x => x.id === id);
+  if(!f) return;
+  const text = compactLines(f).map(([k,v])=>`${k}: ${v}`).join("\n");
+  copyText(text);
+}
+function borrarFactura(id){
+  if(!confirm("¿Borrar esta factura guardada?")) return;
+  facturas = facturas.filter(x => x.id !== id);
+  saveStorage();
+  renderList();
+  toast("Borrada");
+}
+function limpiar(){
+  ["producto","precio","sinIva","detalle","cliente","cedula","telefono","correo","direccion"].forEach(id=>$(id).value="");
+  $("cantidad").value = "1";
+  $("iva").value = "15";
+  actualizarFechaHora();
+  renderCopy();
+}
+function exportar(){
+  const blob = new Blob([JSON.stringify(facturas,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  const d = new Date();
+  a.href = URL.createObjectURL(blob);
+  a.download = `respaldo_facturas_central_phone_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importarArchivo(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      if(!Array.isArray(data)) throw new Error("El JSON no contiene una lista.");
+      facturas = data;
+      saveStorage();
+      renderList();
+      toast("JSON importado");
+    }catch(e){
+      alert("No se pudo importar el archivo. Motivo: " + e.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
-async function copiarValor(txt){
-  try{await navigator.clipboard.writeText(String(txt));toast("Copiado: " + String(txt))}
-  catch{toast("No se pudo copiar automático. Mantén presionado el valor.")}
-}
+window.cargarFactura = cargarFactura;
+window.copiarFactura = copiarFactura;
+window.borrarFactura = borrarFactura;
 
-function formato(f){return campos(f).map(([a,b])=>`${a}: ${b}`).join("\n");}
-function copiarFactura(id){const f=facturas.find(x=>x.id===id);if(f)mostrarItems(f)}
-function marcarHecha(id){const f=facturas.find(x=>x.id===id);if(!f)return;f.estado=f.estado==="hecha"?"pendiente":"hecha";persistir();render();mostrarItems(f)}
-function eliminar(id){if(!confirm("¿Eliminar este registro?"))return;facturas=facturas.filter(x=>x.id!==id);persistir();render()}
-function editar(id){const f=facturas.find(x=>x.id===id);if(!f)return;["codigo","producto","total","cantidad","info","identificacion","razon","correo","telefono","direccion"].forEach(k=>document.getElementById(k).value=f[k]||"");document.getElementById("tipoId").value=f.tipoId;calcular();mostrarItems(f);toast("Registro cargado para editar. Guarda como nuevo si lo necesitas.");window.scrollTo({top:0,behavior:"smooth"})}
-function limpiarFormulario(){["codigo","producto","total","info","identificacion","razon","correo","telefono","direccion"].forEach(id=>document.getElementById(id).value="");document.getElementById("cantidad").value="1";document.getElementById("tipoId").value="Cédula";calcular()}
-function copiarPendientes(){const pendientes=facturas.filter(f=>f.estado==="pendiente");if(!pendientes.length){toast("No hay pendientes.");return}mostrarItems(pendientes[0]);toast("Mostrando la primera pendiente para copiar ítem por ítem.")}
-function exportarJSON(){const blob=new Blob([JSON.stringify(facturas,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="respaldo_facturas_sri.json";a.click();URL.revokeObjectURL(url)}
-function importarJSON(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(!Array.isArray(data))throw new Error("Formato inválido");facturas=data;persistir();render();toast("Respaldo importado.")}catch(err){toast("No se pudo importar el JSON.")}};reader.readAsText(file);e.target.value=""}
-function borrarTodo(){if(!confirm("Esto borra toda la base local. ¿Seguro?"))return;facturas=[];persistir();render();cerrarPanel()}
-function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.style.display="none",2300)}
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-function render(){const q=document.getElementById("buscar").value.toLowerCase().trim();const data=facturas.filter(f=>!q||JSON.stringify(f).toLowerCase().includes(q));const lista=document.getElementById("lista");if(!data.length){lista.innerHTML='<div class="empty">No hay registros todavía.</div>';return}lista.innerHTML=data.map(f=>`<div class="item"><div class="itemtop"><div><div class="title">${esc(f.producto)} · $${esc(f.total)}</div><div class="meta">Cliente: ${esc(f.razon||"-")} · ID: ${esc(f.identificacion||"-")}<br>Fecha: ${esc(f.fecha)} · Hora: ${esc(f.hora)} · Unitario sin IVA: ${esc(f.unitarioSinIva)}</div></div><div class="status ${f.estado==="hecha"?"done":"pending"}">${f.estado==="hecha"?"HECHA":"PENDIENTE"}</div></div><div class="itemactions"><button class="green" onclick="copiarFactura('${f.id}')">Copiar campos</button><button class="primary" onclick="marcarHecha('${f.id}')">${f.estado==="hecha"?"Marcar pendiente":"Marcar hecha"}</button><button class="ghost" onclick="editar('${f.id}')">Editar</button><button class="red" onclick="eliminar('${f.id}')">Eliminar</button></div></div>`).join("")}
-calcular();render();
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+$("precio").addEventListener("input",()=>{calcularSinIva();renderCopy();});
+$("iva").addEventListener("change",()=>{calcularSinIva();renderCopy();});
+fields.forEach(id=>{
+  const el = $(id);
+  if(el && !["precio","iva","fecha","hora","sinIva"].includes(id)){
+    el.addEventListener("input", renderCopy);
+  }
+});
+$("guardar").addEventListener("click",guardarFactura);
+$("limpiar").addEventListener("click",limpiar);
+$("exportar").addEventListener("click",exportar);
+$("importarBtn").addEventListener("click",()=>$("importar").click());
+$("importar").addEventListener("change",(e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(file) importarArchivo(file);
+  e.target.value = "";
+});
+
+actualizarFechaHora();
+setInterval(()=>{actualizarFechaHora();renderCopy();},30000);
+loadStorage();
+calcularSinIva();
+renderCopy();
+renderList();
 </script>
 </body>
 </html>
