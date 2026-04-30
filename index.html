@@ -170,16 +170,8 @@
     <section class="card">
       <h2><span class="num">1</span> Producto</h2>
 
-      <div class="row">
-        <div>
-          <label>Código de producto</label>
-          <input id="codigo" placeholder="Ej: CP-001 / A15-128" autocomplete="off">
-        </div>
-        <div>
-          <label>Cantidad</label>
-          <input id="cantidad" type="number" inputmode="decimal" min="1" step="1" value="1">
-        </div>
-      </div>
+      <label>Código de producto</label>
+      <input id="codigo" placeholder="Ej: CP-001 / A15-128" autocomplete="off">
 
       <label>Producto / equipo / servicio</label>
       <input id="producto" placeholder="Ej: Samsung A15 / Cambio de pantalla" autocomplete="off">
@@ -258,7 +250,7 @@
 
 <script>
 const $ = (id)=>document.getElementById(id);
-const fields = ["codigo","producto","cantidad","precio","iva","sinIva","detalle","cliente","cedula","telefono","correo","direccion"];
+const fields = ["codigo","producto","precio","iva","sinIva","detalle","cliente","cedula","telefono","correo","direccion"];
 const STORAGE_KEY = "central_phone_facturas_v5";
 let facturas = [];
 let editingId = null;
@@ -280,6 +272,9 @@ function money(n){
   if(!Number.isFinite(x)) return "";
   return x.toFixed(2);
 }
+function upperText(id){
+  return ($(id).value || "").trim().toUpperCase();
+}
 function actualizarFechaHora(){ return nowParts(); }
 function calcularSinIva(){
   const precio = Number($("precio").value || 0);
@@ -293,18 +288,17 @@ function getData(options = {}){
   const n = nowParts();
   const anterior = editingId ? facturas.find(x => String(x.id) === String(editingId)) : null;
   return {
-    codigo:$("codigo").value.trim(),
-    producto:$("producto").value.trim(),
-    cantidad:$("cantidad").value.trim() || "1",
+    codigo:upperText("codigo"),
+    producto:upperText("producto"),
     precio:money($("precio").value),
     iva:$("iva").value,
     sinIva:$("sinIva").value,
-    detalle:$("detalle").value.trim(),
-    cliente:$("cliente").value.trim(),
-    cedula:$("cedula").value.trim(),
-    telefono:$("telefono").value.trim(),
-    correo:$("correo").value.trim(),
-    direccion:$("direccion").value.trim(),
+    detalle:upperText("detalle"),
+    cliente:upperText("cliente"),
+    cedula:upperText("cedula"),
+    telefono:upperText("telefono"),
+    correo:upperText("correo"),
+    direccion:upperText("direccion"),
     fecha: anterior?.fecha || (forSave ? n.fecha : ""),
     hora: anterior?.hora || (forSave ? n.hora : ""),
     id: editingId || (forSave ? makeId() : null),
@@ -315,7 +309,6 @@ function compactLines(data){
   return [
     ["Código", data.codigo],
     ["Producto", data.producto],
-    ["Cantidad", data.cantidad],
     ["Precio total", data.precio ? `$${data.precio}` : ""],
     ["Precio sin IVA", data.sinIva ? `$${data.sinIva}` : ""],
     ["IVA", data.iva ? `${data.iva}%` : ""],
@@ -528,7 +521,6 @@ function limpiar(){
   editingId = null;
   actualizarModoEdicion();
   ["codigo","producto","precio","sinIva","detalle","cliente","cedula","telefono","correo","direccion"].forEach(id=>$(id).value="");
-  $("cantidad").value = "1";
   $("iva").value = "15";
   renderCopy();
   toast("Formulario limpio");
@@ -586,6 +578,19 @@ fields.forEach(id=>{
     el.addEventListener("input", renderCopy);
   }
 });
+
+["codigo","producto","detalle","cliente","cedula","telefono","correo","direccion"].forEach(id=>{
+  const el = $(id);
+  if(el){
+    el.addEventListener("input",()=>{
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      el.value = el.value.toUpperCase();
+      try{ el.setSelectionRange(start,end); }catch(e){}
+    });
+  }
+});
+
 $("guardar").addEventListener("click",guardarPendiente);
 $("limpiar").addEventListener("click",limpiar);
 $("cancelarEdicion").addEventListener("click",()=>cancelarEdicion(true));
